@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'screens/departments_screen.dart';
+import 'test/test_db.dart';
 
 void main() {
   runApp(MyApp());
+  testScales();
 }
 
 class MyApp extends StatelessWidget {
