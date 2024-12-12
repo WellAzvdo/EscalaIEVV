@@ -172,4 +172,22 @@ class DBHelper {
     );
     print("Tabelas no banco de dados: $tables");
   }
+
+  // Métodos de Membros
+
+// Insere um novo membro no banco de dados
+static Future<void> insertMember(String name, int departmentId) async {
+  final db = await DBHelper().database;
+  await db.insert(
+    'members',
+    {'name': name, 'departmentId': departmentId},
+  );
+}
+
+// Retorna todos os membros no banco de dados
+static Future<List<Map<String, dynamic>>> getMembers() async {
+  final db = await DBHelper().database;
+  return await db.query('members');
+}
+
 }
