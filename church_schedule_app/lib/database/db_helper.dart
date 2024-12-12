@@ -1,15 +1,15 @@
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:path/path.dart';
 
 class DBHelper {
-  static const _databaseName = "church_schedule.db";
-  static const _databaseVersion = 1;
-
-  static final DBHelper instance = DBHelper._privateConstructor();
-  DBHelper._privateConstructor();
-
+  static final DBHelper _instance = DBHelper._();
   static Database? _database;
+
+  DBHelper._() {
+    sqfliteFfiInit(); // Inicializa suporte FFI
+    databaseFactory = databaseFactoryFfi; // Configura o factory global
+  }
+
+  factory DBHelper() => _instance;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -18,44 +18,49 @@ class DBHelper {
   }
 
   Future<Database> _initDatabase() async {
-    // Use sqflite_common_ffi for desktop platforms
-    databaseFactory = databaseFactoryFfi;
-   
+    final dbFactory = databaseFactoryFfi; // Certifique-se que o factory está configurado
+    final dbPath = await getDatabasesPath();
+    final path = '$dbPath/church_schedule.db';
 
-    String path = join(await getDatabasesPath(), _databaseName);
-    return await databaseFactory.openDatabase(
-      path,
-      options: OpenDatabaseOptions(
-        version: _databaseVersion,
-        onCreate: _onCreate,
-      ),
+    return await dbFactory.openDatabase(path, options: OpenDatabaseOptions(
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE departments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL
+          )
+        ''');
+      },
+    ));
+  }
+
+  static Future<List<Map<String, dynamic>>> getDepartments() async {
+    final db = await DBHelper().database;
+    return await db.query('departments');
+  }
+
+  static Future<void> insertDepartment(String name) async {
+    final db = await DBHelper().database;
+    await db.insert('departments', {'name': name});
+  }
+
+  static Future<void> updateDepartment(int id, String newName) async {
+    final db = await DBHelper().database;
+    await db.update(
+      'departments',
+      {'name': newName},
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE departments (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE people (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        department_id INTEGER NOT NULL,
-        FOREIGN KEY (department_id) REFERENCES departments (id)
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE schedules (
-        id INTEGER PRIMARY KEY,
-        date TEXT NOT NULL,
-        person_id INTEGER NOT NULL,
-        FOREIGN KEY (person_id) REFERENCES people (id)
-      )
-    ''');
+  static Future<void> deleteDepartment(int id) async {
+    final db = await DBHelper().database;
+    await db.delete(
+      'departments',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
