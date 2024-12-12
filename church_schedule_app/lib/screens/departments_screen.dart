@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
+import 'add_edit_scale_screen.dart';  // Importe a tela para adicionar/editar escala.
 
 class DepartmentsScreen extends StatefulWidget {
   @override
@@ -95,6 +96,41 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
     );
   }
 
+  // Método para mostrar as opções do FAB
+  void _showFABOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.calendar_today),
+                title: Text('Add New Scale'),
+                onTap: () {
+                  Navigator.of(context).pop();  // Fecha o menu
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => AddEditScaleScreen())
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.add),
+                title: Text('Add New Department'),
+                onTap: () {
+                  Navigator.of(context).pop();  // Fecha o menu
+                  _showAddEditDialog();  // Chama a função para adicionar um departamento
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,7 +166,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: () => _showAddEditDialog(),
+        onPressed: _showFABOptions,  // Chama a função para abrir as opções
       ),
     );
   }
