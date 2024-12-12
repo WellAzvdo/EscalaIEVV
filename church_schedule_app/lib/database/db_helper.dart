@@ -45,6 +45,14 @@ class DBHelper {
             FOREIGN KEY (departmentId) REFERENCES departments(id)
           )
         ''');
+
+        // Criação da tabela de membros (se necessário)
+        await db.execute('''
+          CREATE TABLE members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL
+          )
+        ''');
       },
         onUpgrade: (db, oldVersion, newVersion) async {
       // Adicionar alterações necessárias ao banco aqui
@@ -93,7 +101,7 @@ class DBHelper {
     await db.insert('scales', {
       'departmentId': departmentId,
       'dateTime': dateTime.toIso8601String(),
-      'memberIds': memberIds.join(','),
+      'memberIds': memberIds.join(','), // Concatena os IDs dos membros em uma string
     });
   }
 
@@ -104,7 +112,7 @@ class DBHelper {
       {
         'departmentId': departmentId,
         'dateTime': newDateTime.toIso8601String(),
-        'memberIds': newMemberIds.join(','),
+        'memberIds': newMemberIds.join(','), // Atualiza os IDs dos membros
       },
       where: 'id = ?',
       whereArgs: [id],
@@ -129,21 +137,11 @@ class DBHelper {
       whereArgs: [departmentId, dateTime.toIso8601String()],
     );
 
-    return maps.isNotEmpty;
+    return maps.isNotEmpty; // Se houver alguma escala, há conflito
   }
 
-  // Debug log
-  static Future<void> logTables() async {
-  final db = await DBHelper().database;
-  final tables = await db.rawQuery(
-    "SELECT name FROM sqlite_master WHERE type='table';"
-  );
-  print("Tabelas no banco de dados: $tables");
-
-  await DBHelper.logTables();
-  }
-  
-    static Future<bool> checkMemberConflict(List<int> memberIds, DateTime dateTime) async {
+  // Verifica se há conflito de membros para a mesma data e horário
+  static Future<bool> checkMemberConflict(List<int> memberIds, DateTime dateTime) async {
     final db = await DBHelper().database;
 
     // Converte os IDs dos membros para a string usada no banco
@@ -152,9 +150,9 @@ class DBHelper {
     // Consulta para verificar conflitos
     final query = '''
       SELECT * FROM scales
-      WHERE dateTime = ?
+      WHERE dateTime = ? 
       AND (
-        ',' || memberIds || ',' GLOB ?
+        ',' || memberIds || ',' GLOB ? 
       )
     ''';
 
@@ -166,4 +164,12 @@ class DBHelper {
     return result.isNotEmpty;
   }
 
+  // Função de Debug para verificar as tabelas no banco de dados
+  static Future<void> logTables() async {
+    final db = await DBHelper().database;
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table';"
+    );
+    print("Tabelas no banco de dados: $tables");
+  }
 }

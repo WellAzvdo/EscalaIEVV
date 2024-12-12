@@ -4,8 +4,6 @@ import 'test/test_db.dart';
 
 void main() {
   runApp(MyApp());
-  testScales();
-  testConflictValidation();
 }
 
 class MyApp extends StatelessWidget {
