@@ -106,6 +106,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              /*
               ListTile(
                 leading: Icon(Icons.calendar_today),
                 title: Text('Add New Scale'),
@@ -115,7 +116,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                     MaterialPageRoute(builder: (_) => AddEditScaleScreen())
                   );
                 },
-              ),
+              ), */
               ListTile(
                 leading: Icon(Icons.add),
                 title: Text('Add New Department'),
@@ -164,6 +165,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                 );
               },
             ),
+      
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: _showFABOptions,  // Chama a função para abrir as opções
