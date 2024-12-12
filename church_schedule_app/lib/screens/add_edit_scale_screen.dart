@@ -157,6 +157,13 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                     return ListTile(
                       title: Text('Departamento ID: ${scale['departmentId']}'),
                       subtitle: Text('Data: ${scale['dateTime']}'),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          await DBHelper.deleteScale(scale['id']);
+                          _loadScales(); // Atualiza a lista após deletar
+                        },
+                      ),
                     );
                   },
                 ),
