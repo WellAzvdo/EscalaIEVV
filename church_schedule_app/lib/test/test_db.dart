@@ -17,6 +17,21 @@ void testScales() async {
 
 }
 
+Future<void> testConflictValidation() async {
+  final dbHelper = DBHelper();
+
+  // Insere dados de teste
+  await DBHelper.insertScale(1, DateTime(2024, 12, 15, 9, 0), [1, 2]);
+  
+  // Testa conflitos
+  bool conflict = await DBHelper.checkMemberConflict([2], DateTime(2024, 12, 15, 9, 0));
+  print('Conflito detectado: $conflict'); // Deve ser true
+
+  conflict = await DBHelper.checkMemberConflict([3], DateTime(2024, 12, 15, 9, 0));
+  print('Conflito detectado: $conflict'); // Deve ser false
+}
+
+
 void main() {
   runApp(MaterialApp(
     home: Scaffold(

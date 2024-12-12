@@ -143,4 +143,27 @@ class DBHelper {
   await DBHelper.logTables();
   }
   
+    static Future<bool> checkMemberConflict(List<int> memberIds, DateTime dateTime) async {
+    final db = await DBHelper().database;
+
+    // Converte os IDs dos membros para a string usada no banco
+    String memberIdsPattern = memberIds.map((id) => '%,$id,%').join('|');
+
+    // Consulta para verificar conflitos
+    final query = '''
+      SELECT * FROM scales
+      WHERE dateTime = ?
+      AND (
+        ',' || memberIds || ',' GLOB ?
+      )
+    ''';
+
+    final args = [dateTime.toIso8601String(), '*,' + memberIds.join(',*,') + ',*'];
+
+    final result = await db.rawQuery(query, args);
+
+    // Retorna verdadeiro se encontrar algum conflito
+    return result.isNotEmpty;
+  }
+
 }
