@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 
 class DBHelper {
@@ -17,11 +18,17 @@ class DBHelper {
   }
 
   Future<Database> _initDatabase() async {
+    // Use sqflite_common_ffi for desktop platforms
+    databaseFactory = databaseFactoryFfi;
+   
+
     String path = join(await getDatabasesPath(), _databaseName);
-    return await openDatabase(
+    return await databaseFactory.openDatabase(
       path,
-      version: _databaseVersion,
-      onCreate: _onCreate,
+      options: OpenDatabaseOptions(
+        version: _databaseVersion,
+        onCreate: _onCreate,
+      ),
     );
   }
 
@@ -52,4 +59,3 @@ class DBHelper {
     ''');
   }
 }
-
