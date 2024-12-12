@@ -20,15 +20,15 @@ class DBHelper {
 
   // Inicializa o banco de dados e cria as tabelas
   Future<Database> _initDatabase() async {
-    final dbFactory = databaseFactoryFfi; // Certifique-se que o factory está configurado
+    final dbFactory = databaseFactoryFfi;
     final dbPath = await getDatabasesPath();
     final path = '$dbPath/church_schedule.db';
-    
+  
     return await dbFactory.openDatabase(path, options: OpenDatabaseOptions(
       version: 2,
       onCreate: (db, version) async {
         // Criação da tabela de departamentos
-        await db.execute('''
+        await db.execute(''' 
           CREATE TABLE departments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL
@@ -36,7 +36,7 @@ class DBHelper {
         ''');
 
         // Criação da tabela de escalas
-        await db.execute('''
+        await db.execute(''' 
           CREATE TABLE scales (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             departmentId INTEGER,
@@ -46,19 +46,27 @@ class DBHelper {
           )
         ''');
 
-        // Criação da tabela de membros (se necessário)
-        await db.execute('''
+        // Criação da tabela de membros com departmentId
+        await db.execute(''' 
           CREATE TABLE members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
+            name TEXT NOT NULL,
+            departmentId INTEGER,  
+            FOREIGN KEY (departmentId) REFERENCES departments(id)
           )
         ''');
       },
-        onUpgrade: (db, oldVersion, newVersion) async {
-      // Adicionar alterações necessárias ao banco aqui
+      onUpgrade: (db, oldVersion, newVersion) async {
+        // No caso de uma atualização, se a versão for maior que 1, altere o banco
+        if (oldVersion < 2) {
+          await db.execute(''' 
+            ALTER TABLE members ADD COLUMN departmentId INTEGER;
+          ''');
+        }
       },
     ));
   }
+
 
   // Métodos de Departamento
   static Future<List<Map<String, dynamic>>> getDepartments() async {
