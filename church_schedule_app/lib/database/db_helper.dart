@@ -137,15 +137,33 @@ class DBHelper {
   }
 
   // Verifica se já existe uma escala para o departamento no horário
-  static Future<bool> checkForScaleConflict(int departmentId, DateTime dateTime) async {
+  static Future<bool> checkForScaleConflict(int departmentId, DateTime dateTime, List<int> memberIds) async {
     final db = await DBHelper().database;
-    final List<Map<String, dynamic>> maps = await db.query(
+
+    // Verifica se já existe uma escala para o mesmo departamento e horário
+    final List<Map<String, dynamic>> departmentConflict = await db.query(
       'scales',
       where: 'departmentId = ? AND dateTime = ?',
       whereArgs: [departmentId, dateTime.toIso8601String()],
     );
 
-    return maps.isNotEmpty; // Se houver alguma escala, há conflito
+    if (departmentConflict.isNotEmpty){
+      return true; //Conflito encontrado no departamento
+    }
+
+    // Verifica se algum membro já está escalado em outro departamento no mesmo horário
+    final List<Map<String, dynamic>> memberConflict = await db.rawQuery('''
+    SELECT * FROM scales
+    WHERE dateTime = ?
+    AND (
+      memberIds LIKE ?
+    )
+    ''', [
+      dateTime.toIso8601String(),
+      memberIds.map((id) => '%,$id,%').join('|'), // Gera o padrão para buscar membros
+    ]);
+
+    return memberConflict.isNotEmpty;
   }
 
   // Verifica se há conflito de membros para a mesma data e horário
@@ -183,19 +201,19 @@ class DBHelper {
 
   // Métodos de Membros
 
-// Insere um novo membro no banco de dados
-static Future<void> insertMember(String name, int departmentId) async {
-  final db = await DBHelper().database;
-  await db.insert(
-    'members',
-    {'name': name, 'departmentId': departmentId},
-  );
-}
+  // Insere um novo membro no banco de dados
+  static Future<void> insertMember(String name, int departmentId) async {
+    final db = await DBHelper().database;
+    await db.insert(
+      'members',
+      {'name': name, 'departmentId': departmentId},
+    );
+  }
 
-// Retorna todos os membros no banco de dados
-static Future<List<Map<String, dynamic>>> getMembers() async {
-  final db = await DBHelper().database;
-  return await db.query('members');
-}
+  // Retorna todos os membros no banco de dados
+  static Future<List<Map<String, dynamic>>> getMembers() async {
+    final db = await DBHelper().database;
+    return await db.query('members');
+  }
 
 }

@@ -28,7 +28,9 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
     '19:00',
     '20:00'
   ];
-
+  
+  List<Map<String, dynamic>> _filteredMembers = [];
+  
   @override
   void initState() {
     super.initState();
@@ -70,7 +72,20 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
   
       final dateTimeString = '${_selectedDate.toIso8601String().split('T')[0]} $_selectedTime';
       final dateTime = DateTime.parse(dateTimeString);
-  
+
+      final conflictExists = await DBHelper.checkForScaleConflict(
+        int.parse(_selectedDepartment!),
+        dateTime,
+        _selectedMembers,
+      );
+
+      if (conflictExists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Conflito encontrado: Membro já escalado nesse horário!')),
+        );
+        return;
+      }
+
       if (widget.scaleId == null) {
         // Insere uma nova escala
         await DBHelper.insertScale(
@@ -97,7 +112,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
       );
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,7 +144,8 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
               ),
               DropdownButtonFormField<int>(
                 decoration: InputDecoration(labelText: 'Membro'),
-                items: _members
+                value: _selectedMembers.isNotEmpty ? _selectedMembers.last : null, // Seleciona o último membro, ou null se não houver seleção
+                items: _filteredMembers
                     .map((member) => DropdownMenuItem<int>(
                           value: member['id'],
                           child: Text(member['name']),
@@ -187,16 +203,23 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                 spacing: 8,
                 children: _selectedMembers
                     .map(
-                      (id) => Chip(
-                        label: Text(
-                          _members.firstWhere((member) => member['id'] == id)['name'],
-                        ),
-                        onDeleted: () {
-                          setState(() {
-                            _selectedMembers.remove(id);
-                          });
-                        },
-                      ),
+                      (id) {
+                        // Tenta encontrar o membro correspondente
+                        final member = _members.firstWhere(
+                          (member) => member['id'] == id,
+                          orElse: () => {'id': id, 'name': 'Membro não encontrado'}, // Valor padrão
+                        );
+
+                        // Retorna o Chip
+                        return Chip(
+                          label: Text(member['name']),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedMembers.remove(id);
+                            });
+                          },
+                        );
+                      },
                     )
                     .toList(),
               ),
@@ -235,13 +258,15 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
       ),
     );
   }
-
+  
   void _filterMembersByDepartment(int departmentId) {
-    final filteredMembers = _members
-        .where((member) => member['departmentId'] == departmentId)
-        .toList();
     setState(() {
-      _members = filteredMembers;
+      _filteredMembers = _members
+          .where((member) => member['departmentId'] == departmentId)
+          .toList();
+
+      // Remover membros de _selectedMembers que não pertencem ao departamento atual
+      _selectedMembers.removeWhere((id) => !_filteredMembers.any((member) => member['id'] == id));
     });
   }
 }
