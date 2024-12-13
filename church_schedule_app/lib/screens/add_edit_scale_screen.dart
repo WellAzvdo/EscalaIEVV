@@ -238,20 +238,53 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                   itemCount: _scales.length,
                   itemBuilder: (context, index) {
                     final scale = _scales[index];
-                    return ListTile(
-                      title: Text('Departamento ID: ${scale['departmentId']}'),
-                      subtitle: Text('Data: ${scale['dateTime']}'),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          await DBHelper.deleteScale(scale['id']);
-                          _loadScales(); // Atualiza a lista após deletar
-                        },
+
+                    // Formatar a data e hora no padrão brasileiro
+                    final dateTime = DateTime.parse(scale['dateTime']);
+                    final formattedDate = '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+
+                    // Obter o nome do departamento
+                    final departmentName = _departments.firstWhere((dept) => dept['id'] == scale['departmentId'])['name'];
+
+                    // Verifique se 'memberIds' é uma string com IDs separados por vírgula
+                    final memberIds = (scale['memberIds'] as String).split(',').map((id) => int.tryParse(id.trim())).where((id) => id != null).toList();
+
+                    // Obter os nomes dos membros a partir dos IDs
+                    final memberNames = memberIds.map<String>((id) {
+                      final member = _members.firstWhere((member) => member['id'] == id);
+                      return member['name'];
+                    }).join(', ');
+
+                    return Card(
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.all(16),
+                        title: Text(
+                          'Departamento: $departmentName',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Membro(s): $memberNames'),
+                            SizedBox(height: 4),
+                            Text('Data: $formattedDate'),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            await DBHelper.deleteScale(scale['id']);
+                            _loadScales(); // Atualiza a lista após deletar
+                          },
+                        ),
                       ),
                     );
                   },
                 ),
-              ),
+              )
             ],
           ),
         ),
