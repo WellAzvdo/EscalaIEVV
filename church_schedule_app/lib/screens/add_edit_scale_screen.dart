@@ -69,7 +69,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
         );
         return;
       }
-  
+
       final dateTimeString = '${_selectedDate.toIso8601String().split('T')[0]} $_selectedTime';
       final dateTime = DateTime.parse(dateTimeString);
 
@@ -102,7 +102,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
           _selectedMembers,
         );
       }
-  
+
       _loadScales(); // Atualiza a lista de escalas
       Navigator.of(context).pop();
     } else {
@@ -112,7 +112,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
       );
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

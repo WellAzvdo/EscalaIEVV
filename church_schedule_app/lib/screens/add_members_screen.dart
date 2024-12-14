@@ -33,7 +33,11 @@ class _AddMembersScreenState extends State<AddMembersScreen> {
       _members = members;
     });
   }
-
+  // Função para adicionar ou atualizar membro
+  void addMemberToDepartment(String memberName, int departmentId) async {
+    await DBHelper.addOrUpdateMemberWithDepartment(memberName, departmentId);
+  }
+  
   Future<void> _saveMember() async {
     if (_formKey.currentState!.validate()) {
       await DBHelper.insertMember(

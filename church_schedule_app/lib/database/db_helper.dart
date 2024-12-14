@@ -50,8 +50,15 @@ class DBHelper {
         await db.execute(''' 
           CREATE TABLE members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            departmentId INTEGER,  
+            name TEXT NOT NULL
+          )
+        ''');
+        await db.execute(''' 
+          CREATE TABLE member_departments (
+            memberId INTEGER,
+            departmentId INTEGER,
+            PRIMARY KEY (memberId, departmentId),
+            FOREIGN KEY (memberId) REFERENCES members(id),
             FOREIGN KEY (departmentId) REFERENCES departments(id)
           )
         ''');
@@ -67,6 +74,55 @@ class DBHelper {
     ));
   }
 
+
+  // Função para verificar se o membro já existe no banco
+  static Future<int?> checkIfMemberExists(String memberName) async {
+    final db = await DBHelper().database;
+  
+    final result = await db.query(
+      'members',
+      where: 'name = ?',
+      whereArgs: [memberName],
+    );
+  
+    if (result.isNotEmpty) {
+      return result.first['id'] as int?; // Retorna o ID do membro existente
+    } else {
+      return null; // Membro não encontrado
+    }
+  }
+
+  // Função para adicionar ou atualizar um membro com o novo departamento
+  static Future<void> addOrUpdateMemberWithDepartment(String memberName, int departmentId) async {
+    final db = await DBHelper().database;
+
+    // Verifica se o membro já existe
+    final existingMemberId = await checkIfMemberExists(memberName);
+
+    if (existingMemberId != null) {
+      // Membro já existe, adiciona a relação com o departamento, se não existir
+      final departmentExists = await db.query(
+        'member_departments',
+        where: 'memberId = ? AND departmentId = ?',
+        whereArgs: [existingMemberId, departmentId],
+      );
+
+      if (departmentExists.isEmpty) {
+        // Se não existir a relação, insere a nova
+        await db.insert('member_departments', {
+          'memberId': existingMemberId,
+          'departmentId': departmentId,
+        });
+      }
+    } else {
+      // Caso o membro não exista, cria um novo e insere a relação com o departamento
+      final memberId = await db.insert('members', {'name': memberName});
+      await db.insert('member_departments', {
+        'memberId': memberId,
+        'departmentId': departmentId,
+      });
+    }
+  }
 
   // Métodos de Departamento
   static Future<List<Map<String, dynamic>>> getDepartments() async {
@@ -104,8 +160,18 @@ class DBHelper {
     return await db.query('scales');
   }
 
+  // Alteração da inserção de escalas
   static Future<void> insertScale(int departmentId, DateTime dateTime, List<int> memberIds) async {
     final db = await DBHelper().database;
+
+    // Verifica se já existe uma escala para o departamento e horário
+    final conflict = await checkForScaleConflict(departmentId, dateTime, memberIds);
+    if (conflict) {
+      print("Conflito encontrado, não é possível adicionar a escala.");
+      return;
+    }
+
+    // Insere a escala
     await db.insert('scales', {
       'departmentId': departmentId,
       'dateTime': dateTime.toIso8601String(),
@@ -136,35 +202,29 @@ class DBHelper {
     );
   }
 
-  // Verifica se já existe uma escala para o departamento no horário
+  // Verifica se há conflito de escala para um membro em um horário
   static Future<bool> checkForScaleConflict(int departmentId, DateTime dateTime, List<int> memberIds) async {
     final db = await DBHelper().database;
 
-    // Verifica se já existe uma escala para o mesmo departamento e horário
-    final List<Map<String, dynamic>> departmentConflict = await db.query(
+    // Verificar se algum membro da lista já está escalado para o mesmo horário em outro departamento
+    final scaleResults = await db.query(
       'scales',
-      where: 'departmentId = ? AND dateTime = ?',
-      whereArgs: [departmentId, dateTime.toIso8601String()],
+      where: 'dateTime = ?',
+      whereArgs: [dateTime.toIso8601String()],
     );
 
-    if (departmentConflict.isNotEmpty){
-      return true; //Conflito encontrado no departamento
+    for (var scale in scaleResults) {
+      final existingMemberIds = (scale['memberIds'] as String).split(',').map((id) => int.parse(id.trim())).toList();
+      
+      // Se algum membro da escala existente estiver na nova lista de membros, há um conflito
+      if (memberIds.any((memberId) => existingMemberIds.contains(memberId))) {
+        return true; // Conflito encontrado
+      }
     }
 
-    // Verifica se algum membro já está escalado em outro departamento no mesmo horário
-    final List<Map<String, dynamic>> memberConflict = await db.rawQuery('''
-    SELECT * FROM scales
-    WHERE dateTime = ?
-    AND (
-      memberIds LIKE ?
-    )
-    ''', [
-      dateTime.toIso8601String(),
-      memberIds.map((id) => '%,$id,%').join('|'), // Gera o padrão para buscar membros
-    ]);
-
-    return memberConflict.isNotEmpty;
+    return false; // Nenhum conflito encontrado
   }
+
 
   // Verifica se há conflito de membros para a mesma data e horário
   static Future<bool> checkMemberConflict(List<int> memberIds, DateTime dateTime) async {
