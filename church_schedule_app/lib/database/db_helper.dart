@@ -40,6 +40,7 @@ class DBHelper {
           CREATE TABLE scales (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             departmentId INTEGER,
+            positionId INTEGER,  -- A coluna positionId deve ser aqui
             dateTime TEXT,
             memberIds TEXT,
             FOREIGN KEY (departmentId) REFERENCES departments(id)
@@ -55,17 +56,73 @@ class DBHelper {
             FOREIGN KEY (departmentId) REFERENCES departments(id)
           )
         ''');
+        
+        await db.execute('''
+          CREATE TABLE positions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            departmentId INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            positionId INTEGER,
+            FOREIGN KEY(departmentId) REFERENCES departments(id)
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         // No caso de uma atualização, se a versão for maior que 1, altere o banco
         if (oldVersion < 2) {
           await db.execute(''' 
-            ALTER TABLE members ADD COLUMN departmentId INTEGER;
+            ALTER TABLE scales ADD COLUMN positionId INTEGER;
           ''');
         }
       },
     ));
   }
+
+  // Posições de cada departamento
+  static Future<void> insertPosition(int departmentId, String name) async {
+   final db = await DBHelper().database;
+   await db.insert(
+     'positions',
+     {'departmentId': departmentId, 'name': name},
+     conflictAlgorithm: ConflictAlgorithm.replace,
+   );
+  }
+
+  static Future<List<Map<String, dynamic>>> getPositionsByDepartment(int departmentId) async {
+    final db = await DBHelper().database;
+    return await db.query(
+      'positions',
+      where: 'departmentId = ?',
+      whereArgs: [departmentId],
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllPositions () async {
+    final db = await DBHelper().database;
+    return await db.query(
+      'positions',
+    );
+  }
+
+  static Future<void> deletePosition(int id) async {
+    final db = await DBHelper().database;
+    await db.delete(
+      'positions',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+  
+  static Future<void> updatePosition(int id, String name) async {
+    final db = await DBHelper().database;
+    await db.update(
+      'positions',
+      {'name': name},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
 
   static Future<bool> checkIfMemberIsScheduled(String memberName, DateTime dateTime) async {
     final db = await DBHelper().database;
@@ -199,7 +256,7 @@ class DBHelper {
   }
 
   // Alteração da inserção de escalas
-  static Future<void> insertScale(int departmentId, DateTime dateTime, List<int> memberIds) async {
+  static Future<void> insertScale(int departmentId, int positionId, DateTime dateTime, List<int> memberIds) async {
     final db = await DBHelper().database;
 
     // Verifica se já existe uma escala para o departamento e horário
@@ -212,17 +269,19 @@ class DBHelper {
     // Insere a escala
     await db.insert('scales', {
       'departmentId': departmentId,
+      'positionId': positionId, // Novo campo no banco
       'dateTime': dateTime.toIso8601String(),
       'memberIds': memberIds.join(','), // Concatena os IDs dos membros em uma string
     });
   }
 
-  static Future<void> updateScale(int id, int departmentId, DateTime newDateTime, List<int> newMemberIds) async {
+  static Future<void> updateScale(int id, int departmentId, int positionId, DateTime newDateTime, List<int> newMemberIds) async {
     final db = await DBHelper().database;
     await db.update(
       'scales',
       {
         'departmentId': departmentId,
+        'positionId': positionId, // Novo campo no banco
         'dateTime': newDateTime.toIso8601String(),
         'memberIds': newMemberIds.join(','), // Atualiza os IDs dos membros
       },

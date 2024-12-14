@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'departments_screen.dart';
 import 'add_members_screen.dart';
 import 'add_edit_scale_screen.dart';
+import 'manage_positions_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   final List<Map<String, dynamic>> _menuItems = [
     {'icon': Icons.business, 'label': 'Departamentos', 'screen': DepartmentsScreen()},
     {'icon': Icons.person, 'label': 'Membros', 'screen': AddMembersScreen()},
     {'icon': Icons.schedule, 'label': 'Escalas', 'screen': AddEditScaleScreen()},
+    {'icon': Icons.settings, 'label': 'Gerenciar Posições', 'screen': ManagePositionsScreen()}, // Novo item
+
   ];
 
   @override

@@ -15,22 +15,17 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
   DateTime _selectedDate = DateTime.now();
   String? _selectedDepartment;
   String? _selectedTime;
+  int? _selectedPosition;
   List<int> _selectedMembers = [];
   List<Map<String, dynamic>> _departments = [];
+  List<Map<String, dynamic>> _positions = [];
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _scales = [];
   final List<String> _availableTimes = [
-    '08:00',
-    '10:00',
-    '16:00',
-    '17:00',
-    '18:00',
-    '19:00',
-    '20:00'
+    '08:00', '10:00', '16:00', '17:00', '18:00', '19:00', '20:00'
   ];
-  
   List<Map<String, dynamic>> _filteredMembers = [];
-  
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +38,27 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
     final departments = await DBHelper.getDepartments();
     setState(() {
       _departments = departments;
+    });
+  }
+
+  void validateDropdownValue<T>(List<T> items, T? currentValue, Function(T?) onInvalid) {
+    if (currentValue != null && !items.contains(currentValue)) {
+      onInvalid(null);
+    }
+  }
+
+  Future<void> _loadPositions(int departmentId) async {
+    final positions = await DBHelper.getPositionsByDepartment(departmentId);
+    
+    // Remova duplicatas com base no ID
+    final uniquePositions = positions.toSet().toList();
+    
+    setState(() {
+      _positions = uniquePositions;
+        // Redefina _selectedPosition se o valor atual não existir em _positions
+      if (!_positions.any((position) => position['id'] == _selectedPosition)) {
+      _selectedPosition = null;
+      }
     });
   }
 
@@ -63,7 +79,6 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
   Future<void> _saveScale() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedMembers.isEmpty) {
-        // Verifica se pelo menos um membro foi selecionado
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Selecione ao menos um membro.')),
         );
@@ -73,18 +88,17 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
       final dateTimeString = '${_selectedDate.toIso8601String().split('T')[0]} $_selectedTime';
       final dateTime = DateTime.parse(dateTimeString);
 
-      // Verificar se algum membro está escalado para o mesmo horário e data
       for (var memberId in _selectedMembers) {
         final member = _members.firstWhere((m) => m['id'] == memberId);
         final memberName = member['name'];
-  
+
         final isScheduled = await DBHelper.checkIfMemberIsScheduled(memberName, dateTime);
-  
+
         if (isScheduled) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('O membro $memberName já está escalado para esse horário!')),
           );
-          return; // Se encontrar conflito, retorna
+          return;
         }
       }
 
@@ -102,23 +116,22 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
       }
 
       if (widget.scaleId == null) {
-        // Insere uma nova escala
         await DBHelper.insertScale(
           int.parse(_selectedDepartment!),
+          _selectedPosition!,
           dateTime,
           _selectedMembers,
         );
       } else {
-        // Atualiza uma escala existente
         await DBHelper.updateScale(
           widget.scaleId!,
           int.parse(_selectedDepartment!),
+          _selectedPosition!,
           dateTime,
           _selectedMembers,
         );
       }
 
-      // Mostra uma mensagem de sucesso
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -128,7 +141,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
             actions: <Widget>[
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Fecha o pop-up
+                  Navigator.of(context).pop();
                 },
                 child: Text('OK'),
               ),
@@ -137,14 +150,23 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
         },
       );
 
-      // Atualiza a lista de escalas e continua na tela
       _loadScales();
     } else {
-      // Exibe uma mensagem se o formulário não for válido
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Preencha todos os campos corretamente.')),
       );
     }
+  }
+
+  void _filterMembersByDepartment(int departmentId) {
+    setState(() {
+      _filteredMembers = _members
+          .where((member) => member['departmentId'] == departmentId)
+          .toList();
+
+      _selectedMembers.removeWhere(
+          (id) => !_filteredMembers.any((member) => member['id'] == id));
+    });
   }
 
   @override
@@ -168,17 +190,44 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                           child: Text(department['name']),
                         ))
                     .toList(),
-                onChanged: (value) {
+                onChanged: (value) async {
                   setState(() {
                     _selectedDepartment = value;
-                    _filterMembersByDepartment(int.parse(value!));
+                    _selectedPosition = null;
                   });
+                  if (value != null) {
+                    await _loadPositions(int.parse(value));
+                    _filterMembersByDepartment(int.parse(value));
+                  }
                 },
                 validator: (value) => value == null ? 'Selecione um departamento' : null,
               ),
+              if (_positions.isNotEmpty)
+              DropdownButtonFormField<int>(
+                decoration: InputDecoration(labelText: 'Posição'),
+                value: _positions.any((position) => position['id'] == _selectedPosition) 
+                    ? _selectedPosition 
+                    : null, // Corrige o valor se não for válido
+                items: _positions
+                    .map((position) => DropdownMenuItem<int>(
+                          value: position['id'],
+                          child: Text(position['name']),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (!_positions.any((position) => position['id'] == _selectedPosition)) {
+                    _selectedPosition = null; // Reseta o valor se não for válido
+                  }
+                  setState(() {
+                    _selectedPosition = value; // Atualiza com o valor selecionado
+                  });
+                },
+                validator: (value) => value == null ? 'Selecione uma posição' : null,
+              ),
+
               DropdownButtonFormField<int>(
                 decoration: InputDecoration(labelText: 'Membro'),
-                value: _selectedMembers.isNotEmpty ? _selectedMembers.last : null, // Seleciona o último membro, ou null se não houver seleção
+                value: _selectedMembers.isNotEmpty ? _selectedMembers.last : null,
                 items: _filteredMembers
                     .map((member) => DropdownMenuItem<int>(
                           value: member['id'],
@@ -238,13 +287,10 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                 children: _selectedMembers
                     .map(
                       (id) {
-                        // Tenta encontrar o membro correspondente
                         final member = _members.firstWhere(
                           (member) => member['id'] == id,
-                          orElse: () => {'id': id, 'name': 'Membro não encontrado'}, // Valor padrão
+                          orElse: () => {'id': id, 'name': 'Membro não encontrado'},
                         );
-
-                        // Retorna o Chip
                         return Chip(
                           label: Text(member['name']),
                           onDeleted: () {
@@ -273,26 +319,44 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                   itemBuilder: (context, index) {
                     final scale = _scales[index];
 
-                    // Formatar a data e hora no padrão brasileiro
-                    final dateTime = DateTime.parse(scale['dateTime']);
-                    final formattedDate = '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+                    // Garantindo que 'scale' esteja correto
+                    final dateTime = DateTime.tryParse(scale['dateTime'] ?? '');
+                    final formattedDate = dateTime != null
+                        ? '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}'
+                        : 'Data inválida';
 
-                    // Obter o nome do departamento
-                    final departmentName = _departments.firstWhere((dept) => dept['id'] == scale['departmentId'])['name'];
+                    final department = _departments.firstWhere(
+                      (dept) => dept['id'] == scale['departmentId'],
+                      orElse: () => {'id': null, 'name': 'Departamento não encontrado'},
+                    );
+                    final departmentName = department['name'] ?? 'Departamento não encontrado';
 
-                    // Verifique se 'memberIds' é uma string com IDs separados por vírgula
-                    final memberIds = (scale['memberIds'] as String).split(',').map((id) => int.tryParse(id.trim())).where((id) => id != null).toList();
+                    final position = _positions.firstWhere(
+                      (pos) => pos['id'] == scale['positionId'],
+                      orElse: () => {'id': null, 'name': 'Posição não encontrada'},
+                    );
+                    final positionName = position['name'] ?? 'Posição não encontrada';
 
-                    // Obter os nomes dos membros a partir dos IDs
+                    final memberIds = (scale['memberIds'] as String?)
+                        ?.split(',')
+                        .map((id) => int.tryParse(id.trim()))
+                        .where((id) => id != null)
+                        .toList() ?? [];
+
                     final memberNames = memberIds.map<String>((id) {
-                      final member = _members.firstWhere((member) => member['id'] == id);
-                      return member['name'];
+                      final member = _members.firstWhere(
+                        (member) => member['id'] == id,
+                        orElse: () => {'id': id, 'name': 'Membro não encontrado'},
+                      );
+                      return member['name'] ?? 'Membro não encontrado';
                     }).join(', ');
 
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 8),
                       elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: ListTile(
                         contentPadding: EdgeInsets.all(16),
                         title: Text(
@@ -302,6 +366,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Text('Posição: $positionName'),
                             Text('Membro(s): $memberNames'),
                             SizedBox(height: 4),
                             Text('Data: $formattedDate'),
@@ -310,7 +375,6 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                         trailing: IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
                           onPressed: () async {
-                            // Exibe o diálogo de confirmação
                             final confirmDelete = await showDialog<bool>(
                               context: context,
                               builder: (BuildContext context) {
@@ -320,13 +384,13 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                                   actions: <Widget>[
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.of(context).pop(false); // Retorna 'false' se o usuário clicar em 'Não'
+                                        Navigator.of(context).pop(false);
                                       },
                                       child: Text('Não'),
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.of(context).pop(true); // Retorna 'true' se o usuário clicar em 'Sim'
+                                        Navigator.of(context).pop(true);
                                       },
                                       child: Text('Sim'),
                                     ),
@@ -334,37 +398,25 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                                 );
                               },
                             );
-                        
-                            // Se o usuário confirmar a deleção
+
                             if (confirmDelete == true) {
                               await DBHelper.deleteScale(scale['id']);
-                              _loadScales(); // Atualiza a lista de escalas após a deleção
+                              _loadScales();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('Escala deletada com sucesso.')),
                               );
                             }
                           },
-                        )
+                        ),
                       ),
                     );
                   },
                 ),
-              )
+              ),
             ],
           ),
         ),
       ),
     );
-  }
-  
-  void _filterMembersByDepartment(int departmentId) {
-    setState(() {
-      _filteredMembers = _members
-          .where((member) => member['departmentId'] == departmentId)
-          .toList();
-
-      // Remover membros de _selectedMembers que não pertencem ao departamento atual
-      _selectedMembers.removeWhere((id) => !_filteredMembers.any((member) => member['id'] == id));
-    });
   }
 }
