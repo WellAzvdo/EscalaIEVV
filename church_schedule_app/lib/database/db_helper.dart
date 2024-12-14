@@ -50,15 +50,8 @@ class DBHelper {
         await db.execute(''' 
           CREATE TABLE members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
-          )
-        ''');
-        await db.execute(''' 
-          CREATE TABLE member_departments (
-            memberId INTEGER,
-            departmentId INTEGER,
-            PRIMARY KEY (memberId, departmentId),
-            FOREIGN KEY (memberId) REFERENCES members(id),
+            name TEXT NOT NULL,
+            departmentId INTEGER,  
             FOREIGN KEY (departmentId) REFERENCES departments(id)
           )
         ''');
