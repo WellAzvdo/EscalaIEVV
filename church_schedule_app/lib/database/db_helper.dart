@@ -74,6 +74,51 @@ class DBHelper {
     ));
   }
 
+  static Future<bool> checkIfMemberIsScheduled(String memberName, DateTime dateTime) async {
+    final db = await DBHelper().database;
+  
+    // Converte a data e hora para o formato ISO 8601
+    final formattedDateTime = dateTime.toIso8601String();
+  
+    // Primeiro, obtemos os IDs dos membros com o nome fornecido
+    final memberQuery = await db.query(
+      'members',
+      where: 'name = ?',
+      whereArgs: [memberName],
+    );
+  
+    // Se não encontrar nenhum membro com esse nome, retorna falso
+    if (memberQuery.isEmpty) {
+      return false;
+    }
+  
+    // Extraímos os IDs dos membros encontrados
+    final memberIds = memberQuery.map((e) => e['id'] as int).toList();
+  
+    // Agora, buscamos as escalas para o mesmo horário
+    final scaleQuery = await db.query(
+      'scales',
+      where: 'dateTime = ?',
+      whereArgs: [formattedDateTime],
+    );
+  
+    // Verifica se algum membro já está escalado para esse horário
+    for (var scale in scaleQuery) {
+      final existingMemberIds = (scale['memberIds'] as String)
+          .split(',')
+          .map((id) => int.parse(id.trim()))
+          .toList();
+  
+      // Se algum dos membros do banco já estiver na lista da escala, retornamos verdadeiro (conflito)
+      if (memberIds.any((id) => existingMemberIds.contains(id))) {
+        return true; // Conflito encontrado
+      }
+    }
+  
+    // Se não encontrar nenhum conflito, retorna falso
+    return false;
+  }
+
 
   // Função para verificar se o membro já existe no banco
   static Future<int?> checkIfMemberExists(String memberName) async {

@@ -73,6 +73,21 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
       final dateTimeString = '${_selectedDate.toIso8601String().split('T')[0]} $_selectedTime';
       final dateTime = DateTime.parse(dateTimeString);
 
+      // Verificar se algum membro está escalado para o mesmo horário e data
+      for (var memberId in _selectedMembers) {
+        final member = _members.firstWhere((m) => m['id'] == memberId);
+        final memberName = member['name'];
+  
+        final isScheduled = await DBHelper.checkIfMemberIsScheduled(memberName, dateTime);
+  
+        if (isScheduled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('O membro $memberName já está escalado para esse horário!')),
+          );
+          return; // Se encontrar conflito, retorna
+        }
+      }
+
       final conflictExists = await DBHelper.checkForScaleConflict(
         int.parse(_selectedDepartment!),
         dateTime,
