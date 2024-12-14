@@ -103,8 +103,27 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
         );
       }
 
-      _loadScales(); // Atualiza a lista de escalas
-      Navigator.of(context).pop();
+      // Mostra uma mensagem de sucesso
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Info'),
+            content: Text('Escala adicionada com sucesso!'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Fecha o pop-up
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+
+      // Atualiza a lista de escalas e continua na tela
+      _loadScales();
     } else {
       // Exibe uma mensagem se o formulário não for válido
       ScaffoldMessenger.of(context).showSnackBar(
@@ -276,10 +295,41 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                         trailing: IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
                           onPressed: () async {
-                            await DBHelper.deleteScale(scale['id']);
-                            _loadScales(); // Atualiza a lista após deletar
+                            // Exibe o diálogo de confirmação
+                            final confirmDelete = await showDialog<bool>(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Confirmar Deleção'),
+                                  content: Text('Tem certeza de que deseja excluir esta escala?'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(false); // Retorna 'false' se o usuário clicar em 'Não'
+                                      },
+                                      child: Text('Não'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(true); // Retorna 'true' se o usuário clicar em 'Sim'
+                                      },
+                                      child: Text('Sim'),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                        
+                            // Se o usuário confirmar a deleção
+                            if (confirmDelete == true) {
+                              await DBHelper.deleteScale(scale['id']);
+                              _loadScales(); // Atualiza a lista de escalas após a deleção
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Escala deletada com sucesso.')),
+                              );
+                            }
                           },
-                        ),
+                        )
                       ),
                     );
                   },
