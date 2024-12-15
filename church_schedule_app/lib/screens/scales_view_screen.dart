@@ -52,8 +52,8 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
     });
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  String _formatTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   Future<String> _getPositionName(int positionId, int departmentId) async {
@@ -87,11 +87,6 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                   _calendarFormat = format;
                 });
               },
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Escalas do Dia ${_selectedDay.day.toString().padLeft(2, '0')}/${_selectedDay.month.toString().padLeft(2, '0')}/${_selectedDay.year}',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Expanded(
@@ -145,7 +140,7 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                           return member['name'] ?? 'Membro não encontrado';
                         }).join(', ');
 
-                        final formattedDate = _formatDateTime(dateTime);
+                        final formattedTime = _formatTime(dateTime);
 
                         return Card(
                           margin: EdgeInsets.symmetric(vertical: 8),
@@ -156,16 +151,20 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                           child: ListTile(
                             contentPadding: EdgeInsets.all(16),
                             title: Text(
-                              'Departamento: $departmentName',
+                              'Membro: $memberNames',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Posição: $position'),
-                                Text('Membro(s): $memberNames'),
-                                SizedBox(height: 4),
-                                Text('Data: $formattedDate'),
+                                Text(
+                                  'Posição: $position',
+                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                Text(
+                                  'Hora: $formattedTime',
+                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
                               ],
                             ),
                           ),
