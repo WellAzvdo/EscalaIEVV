@@ -25,13 +25,15 @@ class DBHelper {
     final path = '$dbPath/church_schedule.db';
   
     return await dbFactory.openDatabase(path, options: OpenDatabaseOptions(
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         // Criação da tabela de departamentos
         await db.execute(''' 
           CREATE TABLE departments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
+            name TEXT NOT NULL,
+            icon TEXT -- Novo campo para armazenar o ícone do departamento
+
           )
         ''');
 
@@ -69,9 +71,9 @@ class DBHelper {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         // No caso de uma atualização, se a versão for maior que 1, altere o banco
-        if (oldVersion < 2) {
+        if (oldVersion < 3) {
           await db.execute(''' 
-            ALTER TABLE scales ADD COLUMN positionId INTEGER;
+            ALTER TABLE departments ADD COLUMN icon TEXT;
           ''');
         }
       },
@@ -225,16 +227,23 @@ class DBHelper {
     return await db.query('departments');
   }
 
-  static Future<void> insertDepartment(String name) async {
+  static Future<void> insertDepartment(String name, String? icon) async {
     final db = await DBHelper().database;
-    await db.insert('departments', {'name': name});
+    await db.insert('departments', 
+    {
+      'name': name,
+      'icon': icon // Armazena o ícone, pode ser nulo
+    });
   }
 
-  static Future<void> updateDepartment(int id, String newName) async {
+  static Future<void> updateDepartment(int id, String newName, String? newIcon) async {
     final db = await DBHelper().database;
     await db.update(
       'departments',
-      {'name': newName},
+      {
+        'name': newName,
+        'icon': newIcon // Atualiza o ícone
+      },
       where: 'id = ?',
       whereArgs: [id],
     );

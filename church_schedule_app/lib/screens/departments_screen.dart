@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
-import 'add_edit_scale_screen.dart';  // Importe a tela para adicionar/editar escala.
 
 class DepartmentsScreen extends StatefulWidget {
   @override
@@ -23,13 +22,13 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
     });
   }
 
-  Future<void> _addDepartment(String name) async {
-    await DBHelper.insertDepartment(name);
+  Future<void> _addDepartment(String name, String? icon) async {
+    await DBHelper.insertDepartment(name, icon);
     _fetchDepartments();
   }
 
-  Future<void> _editDepartment(int id, String newName) async {
-    await DBHelper.updateDepartment(id, newName);
+  Future<void> _editDepartment(int id, String newName, String? newIcon) async {
+    await DBHelper.updateDepartment(id, newName, newIcon);
     _fetchDepartments();
   }
 
@@ -38,34 +37,165 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
     _fetchDepartments();
   }
 
-  void _showAddEditDialog({int? id, String? currentName}) {
-    final _controller = TextEditingController(text: currentName ?? '');
+  Future<String?> _showIconSelectionDialog() async {
+    final icons = <IconData>[
+      Icons.ac_unit,
+      Icons.access_alarm,
+      Icons.accessibility,
+      Icons.account_balance,
+      Icons.add_shopping_cart,
+      Icons.airplane_ticket,
+      // Adicione mais ícones conforme necessário
+    ];
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Select an Icon'),
+          content: Container(
+            width: double.maxFinite,
+            child: GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: icons.length,
+              itemBuilder: (context, index) {
+                final icon = icons[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop(icon.codePoint.toString());
+                  },
+                  child: Icon(icon, size: 30),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddEditDialog({int? id, String? currentName, String? currentIcon}) {
+    final _nameController = TextEditingController(text: currentName ?? '');
+    String? selectedIcon = currentIcon; // Mantém o ícone atual (se houver)
+
     showDialog(
       context: context,
       builder: (_) {
+        return StatefulBuilder( // Para atualizar o estado dentro do dialog
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(id == null ? 'Add Department' : 'Edit Department'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(labelText: 'Department Name'),
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text('Selected Icon: '),
+                      if (selectedIcon != null)
+                        Icon(
+                          IconData(
+                            int.parse(selectedIcon!),
+                            fontFamily: 'MaterialIcons',
+                          ),
+                        )
+                      else
+                        Text('None', style: TextStyle(color: Colors.red)),
+                      Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          final icon = await _showIconSelectionDialog();
+                          if (icon != null) {
+                            setDialogState(() {
+                              selectedIcon = icon;
+                            });
+                          }
+                        },
+                        child: Text('Select Icon'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (selectedIcon == null) {
+                      // Mostra mensagem de erro se o ícone não foi selecionado
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please select an icon!')),
+                      );
+                      return; // Não permite salvar
+                    }
+
+                    if (id == null) {
+                      _addDepartment(_nameController.text, selectedIcon!);
+                    } else {
+                      _editDepartment(id, _nameController.text, selectedIcon!);
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<String?> _showIconPicker(BuildContext context) async {
+    return await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final icons = [
+          Icons.home,
+          Icons.school,
+          Icons.work,
+          Icons.star,
+          Icons.favorite,
+          Icons.people,
+          Icons.music_note,
+          Icons.sports,
+          Icons.business,
+        ];
+
         return AlertDialog(
-          title: Text(id == null ? 'Add Department' : 'Edit Department'),
-          content: TextField(
-            controller: _controller,
-            decoration: InputDecoration(labelText: 'Department Name'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (id == null) {
-                  _addDepartment(_controller.text);
-                } else {
-                  _editDepartment(id, _controller.text);
-                }
-                Navigator.of(context).pop();
+          title: Text('Select an Icon'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              shrinkWrap: true,
+              itemCount: icons.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop(icons[index].codePoint.toString());
+                  },
+                  child: Icon(icons[index], size: 30),
+                );
               },
-              child: Text('Save'),
             ),
-          ],
+          ),
         );
       },
     );
@@ -96,42 +226,6 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
     );
   }
 
-  // Método para mostrar as opções do FAB
-  void _showFABOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) {
-        return Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              /*
-              ListTile(
-                leading: Icon(Icons.calendar_today),
-                title: Text('Add New Scale'),
-                onTap: () {
-                  Navigator.of(context).pop();  // Fecha o menu
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => AddEditScaleScreen())
-                  );
-                },
-              ), */
-              ListTile(
-                leading: Icon(Icons.add),
-                title: Text('Add New Department'),
-                onTap: () {
-                  Navigator.of(context).pop();  // Fecha o menu
-                  _showAddEditDialog();  // Chama a função para adicionar um departamento
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -145,6 +239,14 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
               itemBuilder: (context, index) {
                 final department = _departments[index];
                 return ListTile(
+                  leading: department['icon'] != null
+                      ? Icon(
+                          IconData(
+                            int.parse(department['icon']),
+                            fontFamily: 'MaterialIcons',
+                          ),
+                        )
+                      : null,
                   title: Text(department['name']),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -154,6 +256,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                         onPressed: () => _showAddEditDialog(
                           id: department['id'],
                           currentName: department['name'],
+                          currentIcon: department['icon'],
                         ),
                       ),
                       IconButton(
@@ -165,10 +268,9 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                 );
               },
             ),
-      
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: _showFABOptions,  // Chama a função para abrir as opções
+        onPressed: () => _showAddEditDialog(),
       ),
     );
   }

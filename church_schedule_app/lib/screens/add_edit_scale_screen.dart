@@ -325,16 +325,19 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
                         ? '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}'
                         : 'Data inválida';
 
+                    // Garantindo que 'scale' esteja correto e não se altere após a criação
                     final department = _departments.firstWhere(
                       (dept) => dept['id'] == scale['departmentId'],
                       orElse: () => {'id': null, 'name': 'Departamento não encontrado'},
                     );
-                    final departmentName = department['name'] ?? 'Departamento não encontrado';
 
+                    final departmentName = department['name'] ?? 'Departamento não encontrado';
+                    
                     final position = _positions.firstWhere(
-                      (pos) => pos['id'] == scale['positionId'],
+                      (pos) => pos['id'] == scale['positionId'] && pos['departmentId'] == scale['departmentId'],
                       orElse: () => {'id': null, 'name': 'Posição não encontrada'},
                     );
+                    
                     final positionName = position['name'] ?? 'Posição não encontrada';
 
                     final memberIds = (scale['memberIds'] as String?)
