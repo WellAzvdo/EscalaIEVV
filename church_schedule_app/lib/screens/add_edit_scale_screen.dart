@@ -63,7 +63,7 @@ void initState() {
   Future<void> _loadScale(int scaleId) async {
     try {
       final scale = await DBHelper().getScaleById(scaleId); // Busca a escala no banco
-  
+
       setState(() {
         // Valores retornados do banco de dados (com tratamento para valores nulos)
         _selectedDepartment = scale['departmentId']?.toString() ?? ''; // Convertendo para string

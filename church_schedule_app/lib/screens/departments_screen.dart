@@ -77,7 +77,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Select an Icon'),
+          title: Text('Selecione um ícone'),
           content: Container(
             width: double.maxFinite,
             child: GridView.builder(
@@ -114,18 +114,18 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
         return StatefulBuilder( // Para atualizar o estado dentro do dialog
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(id == null ? 'Add Department' : 'Edit Department'),
+              title: Text(id == null ? 'Adicionar Departamento' : 'Editar Departamento'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: _nameController,
-                    decoration: InputDecoration(labelText: 'Department Name'),
+                    decoration: InputDecoration(labelText: 'Nome do Departamento'),
                   ),
                   SizedBox(height: 10),
                   Row(
                     children: [
-                      Text('Selected Icon: '),
+                      Text('Ícone: '),
                       if (selectedIcon != null)
                         Icon(
                           IconData(
@@ -145,7 +145,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                             });
                           }
                         },
-                        child: Text('Select Icon'),
+                        child: Text('Selecionar Ícone'),
                       ),
                     ],
                   ),
@@ -161,7 +161,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                     if (selectedIcon == null) {
                       // Mostra mensagem de erro se o ícone não foi selecionado
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please select an icon!')),
+                        SnackBar(content: Text('Por favor, seleciona um ícone!')),
                       );
                       return; // Não permite salvar
                     }
@@ -201,7 +201,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
         ];
 
         return AlertDialog(
-          title: Text('Select an Icon'),
+          title: Text('Selecione um ícone'),
           content: SizedBox(
             width: double.maxFinite,
             child: GridView.builder(
@@ -232,19 +232,19 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: Text('Confirm Deletion'),
-          content: Text('Are you sure you want to delete this department?'),
+          title: Text('Confirmar Exclusão'),
+          content: Text('ATem certeza de que deseja excluir este Departamento?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
+              child: Text('Cancelar'),
             ),
             TextButton(
               onPressed: () {
                 _deleteDepartment(id);
                 Navigator.of(context).pop();
               },
-              child: Text('Delete'),
+              child: Text('Excluir'),
             ),
           ],
         );
@@ -256,10 +256,10 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Departments'),
+        title: Text('Departamento'),
       ),
       body: _departments.isEmpty
-          ? Center(child: Text('No departments added yet.'))
+          ? Center(child: Text('Nenhum departamento adicionado ainda.'))
           : ListView.builder(
               itemCount: _departments.length,
               itemBuilder: (context, index) {

@@ -9,10 +9,10 @@ import '../screens/departments_selecion_screen.dart'; // Importar a tela de sele
 class MenuScreen extends StatelessWidget {
   final List<Map<String, dynamic>> _menuItems = [
     {'icon': Icons.business, 'label': 'Departamentos', 'screen': DepartmentsScreen()},
+    {'icon': Icons.settings, 'label': 'Gerenciar Posições', 'screen': ManagePositionsScreen()},
     {'icon': Icons.person, 'label': 'Membros', 'screen': AddMembersScreen()},
     {'icon': Icons.schedule, 'label': 'Escalas', 'screen': AddEditScaleScreen()},
     {'icon': Icons.calendar_today, 'label': 'Visualizar Escalas', 'screen': DepartmentsSelectionScreen()}, // Alterado para a tela de seleção de departamentos
-    {'icon': Icons.settings, 'label': 'Gerenciar Posições', 'screen': ManagePositionsScreen()},
   ];
 
   @override

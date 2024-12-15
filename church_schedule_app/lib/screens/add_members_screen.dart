@@ -53,8 +53,39 @@ class _AddMembersScreenState extends State<AddMembersScreen> {
 
   // Correção do método de exclusão
   Future<void> _deleteMember(int id) async {
-    await dbHelper.deleteMember(id);  // Usando a instância correta do DBHelper
-    _loadMembers();  // Atualiza a lista de membros após exclusão
+    final confirmation = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmação'),
+          content: Text('Tem certeza de que deseja excluir este membro?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmation == true) {
+      try {
+        await dbHelper.deleteMember(id);
+        _loadMembers(); // Atualiza a lista de membros após exclusão
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Membro excluído com sucesso!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao excluir membro: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _showEditDialog(Map<String, dynamic> member) async {

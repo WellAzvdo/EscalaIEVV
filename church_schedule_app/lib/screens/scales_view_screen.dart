@@ -63,12 +63,41 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
 
   // Função para excluir uma escala
   Future<void> _deleteScale(int scaleId) async {
-    await DBHelper.deleteScale(scaleId); // Chamar diretamente pela classe DBHelper
-    setState(() {
-      _scales = List<Map<String, dynamic>>.from(_scales); // Criar uma cópia da lista
-      _scales.removeWhere((scale) => scale['id'] == scaleId);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Escala excluída com sucesso!')));
+    final confirmation = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmação'),
+          content: Text('Tem certeza de que deseja excluir esta escala?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+  
+    if (confirmation == true) {
+      try {
+        await DBHelper.deleteScale(scaleId);
+        setState(() {
+          _scales.removeWhere((scale) => scale['id'] == scaleId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Escala excluída com sucesso!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao excluir escala: $e')),
+        );
+      }
+    }
   }
 
 

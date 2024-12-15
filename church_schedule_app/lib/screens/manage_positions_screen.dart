@@ -48,9 +48,41 @@ class _ManagePositionsScreenState extends State<ManagePositionsScreen> {
   }
 
   Future<void> _deletePosition(int id) async {
-    await DBHelper.deletePosition(id);
-    _loadPositions();
+    final confirmation = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmação'),
+          content: Text('Tem certeza de que deseja excluir esta posição?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmation == true) {
+      try {
+        await DBHelper.deletePosition(id);
+        _loadPositions(); // Atualiza a lista de posições após exclusão
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Posição excluída com sucesso!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao excluir posição: $e')),
+        );
+      }
+    }
   }
+
 
   Future<void> _editPosition(int id, String newName) async {
     await DBHelper.updatePosition(id, newName);
