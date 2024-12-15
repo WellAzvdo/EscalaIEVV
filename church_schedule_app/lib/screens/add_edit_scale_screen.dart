@@ -76,7 +76,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
 
       if (isScheduled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('O membro $memberName já está escalado para esse horário!')),
+          SnackBar(content: Text('Choque de Escala: O membro $memberName já está escalado(a) para esse horário!')),
         );
         return;
       }
@@ -89,7 +89,7 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
 
       if (conflictExists) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Conflito encontrado: Membro já escalado nesse horário!')),
+          SnackBar(content: Text('Choque de Escala: Membro já escalado(a) nesse horário!')),
         );
         return;
       }

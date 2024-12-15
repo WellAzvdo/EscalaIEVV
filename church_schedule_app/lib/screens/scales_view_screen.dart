@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../database/db_helper.dart';
+import 'add_edit_scale_screen.dart';
 
 class ScalesViewScreen extends StatefulWidget {
   final String departmentName;
@@ -25,7 +26,7 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
     super.initState();
     _selectedDay = DateTime.now();
     _calendarFormat = CalendarFormat.month;
-    _scales = [];
+    _scales = []; // Inicializando a lista como uma lista mutável
     _loadDepartments();
     _loadMembers();
     _loadScales();
@@ -48,7 +49,7 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
   Future<void> _loadScales() async {
     final scales = await DBHelper.getScales();
     setState(() {
-      _scales = scales;
+      _scales = List.from(scales); // Garantir que _scales seja uma lista mutável
     });
   }
 
@@ -58,6 +59,32 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
 
   Future<String> _getPositionName(int positionId, int departmentId) async {
     return await dbHelper.getPositionName(positionId, departmentId); // Usando a instância dbHelper
+  }
+
+  // Função para excluir uma escala
+  Future<void> _deleteScale(int scaleId) async {
+    await DBHelper.deleteScale(scaleId); // Chamar diretamente pela classe DBHelper
+    setState(() {
+      _scales = List<Map<String, dynamic>>.from(_scales); // Criar uma cópia da lista
+      _scales.removeWhere((scale) => scale['id'] == scaleId);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Escala excluída com sucesso!')));
+  }
+
+
+  // Função para navegar para a tela de edição
+  Future<void> _editScale(Map<String, dynamic> scale) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddEditScaleScreen(scaleId: scale['id']), // Passando o ID da escala
+      ),
+    );
+
+    if (result != null && result) {
+      // Se a escala foi atualizada, recarregue as escalas
+      _loadScales();
+    }
   }
 
   @override
@@ -127,18 +154,20 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                         final position = snapshot.data ?? 'Posição não encontrada';
 
                         final memberIds = (scale['memberIds'] as String?)
-                            ?.split(',')
-                            .map((id) => int.tryParse(id.trim()))
-                            .where((id) => id != null)
-                            .toList() ?? [];
+                                ?.split(',') 
+                                .map((id) => int.tryParse(id.trim()))
+                                .where((id) => id != null)
+                                .toList() ?? [];
 
-                        final memberNames = memberIds.map<String>((id) {
-                          final member = _members.firstWhere(
-                            (member) => member['id'] == id,
-                            orElse: () => {'id': id, 'name': 'Membro não encontrado'},
-                          );
-                          return member['name'] ?? 'Membro não encontrado';
-                        }).join(', ');
+                        final memberNames = memberIds
+                            .map<String>((id) {
+                              final member = _members.firstWhere(
+                                (member) => member['id'] == id,
+                                orElse: () => {'id': id, 'name': 'Membro não encontrado'},
+                              );
+                              return member['name'] ?? 'Membro não encontrado';
+                            })
+                            .join(', ');
 
                         final formattedTime = _formatTime(dateTime);
 
@@ -159,12 +188,31 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                               children: [
                                 Text(
                                   'Posição: $position',
-                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
                                 Text(
                                   'Hora: $formattedTime',
-                                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                              ],
+                            ),
+                            trailing: PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _editScale(scale); // Editar escala
+                                } else if (value == 'delete') {
+                                  _deleteScale(scale['id']); // Deletar escala
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem<String>(
+                                  value: 'edit',
+                                  child: Text('Editar'),
+                                ),
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Text('Excluir'),
+                                ),
                               ],
                             ),
                           ),

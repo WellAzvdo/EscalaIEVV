@@ -12,6 +12,7 @@ class _AddMembersScreenState extends State<AddMembersScreen> {
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _departments = [];
   final TextEditingController _nameController = TextEditingController();
+  final DBHelper dbHelper = DBHelper();  // Instanciando DBHelper
 
   @override
   void initState() {
@@ -33,11 +34,12 @@ class _AddMembersScreenState extends State<AddMembersScreen> {
       _members = members;
     });
   }
+
   // Função para adicionar ou atualizar membro
   void addMemberToDepartment(String memberName, int departmentId) async {
     await DBHelper.addOrUpdateMemberWithDepartment(memberName, departmentId);
   }
-  
+
   Future<void> _saveMember() async {
     if (_formKey.currentState!.validate()) {
       await DBHelper.insertMember(
@@ -47,6 +49,39 @@ class _AddMembersScreenState extends State<AddMembersScreen> {
       _nameController.clear();
       _loadMembers(); // Atualiza a lista de membros
     }
+  }
+
+  // Correção do método de exclusão
+  Future<void> _deleteMember(int id) async {
+    await dbHelper.deleteMember(id);  // Usando a instância correta do DBHelper
+    _loadMembers();  // Atualiza a lista de membros após exclusão
+  }
+
+  Future<void> _showEditDialog(Map<String, dynamic> member) async {
+    _nameController.text = member['name'];
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Editar Membro'),
+        content: TextField(
+          controller: _nameController,
+          decoration: InputDecoration(labelText: 'Nome do Membro'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () {
+              addMemberToDepartment(_nameController.text, member['departmentId']);
+              Navigator.pop(context);
+            },
+            child: Text('Salvar'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -105,7 +140,7 @@ class _AddMembersScreenState extends State<AddMembersScreen> {
                     value: dept['id'].toString(),
                     child: Text(dept['name']),
                   ),
-                )
+                ),
               ],
               onChanged: (value) {
                 setState(() {
@@ -113,20 +148,44 @@ class _AddMembersScreenState extends State<AddMembersScreen> {
                 });
               },
             ),
+            SizedBox(height: 24),
             Expanded(
-              child: ListView(
-                children: _members
-                    .where((member) =>
-                        _selectedDepartment == null ||
-                        member['departmentId'].toString() == _selectedDepartment)
-                    .map((member) => ListTile(
-                          title: Text(member['name']),
-                          subtitle:
-                              Text('Departamento ID: ${member['departmentId']}'),
-                        ))
-                    .toList(),
+              child: ListView.builder(
+                itemCount: _members.length,
+                itemBuilder: (context, index) {
+                  final member = _members[index];
+                  if (_selectedDepartment == null ||
+                      member['departmentId'].toString() == _selectedDepartment) {
+                      
+                    // Encontrar o departamento pelo ID
+                    final department = _departments.firstWhere(
+                      (dept) => dept['id'] == member['departmentId'],
+                      orElse: () => {'name': 'Departamento Não Encontrado'} // Caso o departamento não seja encontrado
+                    );
+            
+                    return ListTile(
+                      title: Text(member['name']),
+                      subtitle: Text('Departamento: ${department['name']}'), // Exibe o nome do departamento
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit),
+                            onPressed: () => _showEditDialog(member),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () => _deleteMember(member['id']),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return SizedBox(); // Para itens que não correspondem ao filtro
+                },
               ),
             ),
+
           ],
         ),
       ),

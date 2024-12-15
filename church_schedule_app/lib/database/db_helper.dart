@@ -1,5 +1,6 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/sqflite.dart'; // Importando a classe Database
+import 'package:path/path.dart';  // Importação da biblioteca 'path'
 
 class DBHelper {
   static final DBHelper _instance = DBHelper._();
@@ -405,6 +406,29 @@ class DBHelper {
     return result.isNotEmpty ? result.first : {}; // Retorna um mapa vazio caso não haja resultado
   }
 
+  // Renomeando o getter de 'database' para 'getDatabase' para evitar conflito
+  Future<Database> get getDatabase async {
+    var dbPath = await getDatabasesPath();
+    return openDatabase(
+      join(dbPath, 'church_schedule.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE members(id INTEGER PRIMARY KEY, name TEXT)',
+        );
+      },
+      version: 1,
+    );
+  }
+
+  // Método para deletar membro
+    Future<void> deleteMember(int id) async {
+    final db = await database; // Acessa a instância do banco de dados
+    await db.delete(
+      'members', // Tabela onde os membros são armazenados
+      where: 'id = ?', // Condição de exclusão
+      whereArgs: [id], // Argumento do ID
+    );
+  }
 
   // Função de Debug para verificar as tabelas no banco de dados
   static Future<void> logTables() async {
