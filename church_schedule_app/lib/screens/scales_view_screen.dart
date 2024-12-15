@@ -82,7 +82,7 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
         );
       },
     );
-  
+
     if (confirmation == true) {
       try {
         await DBHelper.deleteScale(scaleId);
@@ -128,6 +128,7 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TableCalendar(
+              locale: 'pt_BR', // Define o idioma para Português do Brasil
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2100, 1, 1),
               focusedDay: _selectedDay,
