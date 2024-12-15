@@ -261,8 +261,17 @@ class DBHelper {
   // Métodos de Escala
   static Future<List<Map<String, dynamic>>> getScales() async {
     final db = await DBHelper().database;
-    return await db.query('scales');
+
+    // Fazemos um JOIN entre as tabelas scales e departments para pegar o nome do departamento
+    final result = await db.rawQuery('''
+      SELECT scales.*, departments.name AS departmentName
+      FROM scales
+      JOIN departments ON scales.departmentId = departments.id
+    ''');
+
+    return result;
   }
+
 
   // Alteração da inserção de escalas
   static Future<void> insertScale(int departmentId, int positionId, DateTime dateTime, List<int> memberIds) async {
@@ -355,6 +364,16 @@ class DBHelper {
     // Retorna verdadeiro se encontrar algum conflito
     return result.isNotEmpty;
   }
+
+  static Future<Map<String, dynamic>> getMemberById(int memberId) async {
+    final db = await DBHelper().database;
+    final result = await db.query('members', where: 'id = ?', whereArgs: [memberId]);
+  
+    print('Resultado da consulta: $result'); // Verifique o que está sendo retornado
+  
+    return result.isNotEmpty ? result.first : {}; // Retorna um mapa vazio caso não haja resultado
+  }
+
 
   // Função de Debug para verificar as tabelas no banco de dados
   static Future<void> logTables() async {
