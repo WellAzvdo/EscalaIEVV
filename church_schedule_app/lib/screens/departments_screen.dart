@@ -44,7 +44,32 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
       Icons.accessibility,
       Icons.account_balance,
       Icons.add_shopping_cart,
-      Icons.airplane_ticket,
+      Icons.airplanemode_active,
+      Icons.all_inclusive,
+      Icons.assessment,
+      Icons.bookmark,
+      Icons.build,
+      Icons.business,
+      Icons.camera_alt,
+      Icons.chat,
+      Icons.cloud,
+      Icons.computer,
+      Icons.contacts,
+      Icons.directions_car,
+      Icons.email,
+      Icons.favorite,
+      Icons.fingerprint,
+      Icons.home,
+      Icons.language,
+      Icons.music_note,
+      Icons.notifications,
+      Icons.restaurant,
+      Icons.school,
+      Icons.shop,
+      Icons.star,
+      Icons.sports_baseball,
+      Icons.train,
+      Icons.work,
       // Adicione mais ícones conforme necessário
     ];
 
@@ -58,7 +83,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
             child: GridView.builder(
               shrinkWrap: true,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
+                crossAxisCount: 5,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
@@ -69,7 +94,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                   onTap: () {
                     Navigator.of(context).pop(icon.codePoint.toString());
                   },
-                  child: Icon(icon, size: 30),
+                  child: Icon(icon, size: 40),
                 );
               },
             ),
@@ -82,7 +107,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
   void _showAddEditDialog({int? id, String? currentName, String? currentIcon}) {
     final _nameController = TextEditingController(text: currentName ?? '');
     String? selectedIcon = currentIcon; // Mantém o ícone atual (se houver)
-
+  
     showDialog(
       context: context,
       builder: (_) {
@@ -140,7 +165,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
                       );
                       return; // Não permite salvar
                     }
-
+  
                     if (id == null) {
                       _addDepartment(_nameController.text, selectedIcon!);
                     } else {
@@ -157,6 +182,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
       },
     );
   }
+
 
   Future<String?> _showIconPicker(BuildContext context) async {
     return await showDialog<String>(
