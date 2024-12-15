@@ -286,6 +286,29 @@ class DBHelper {
   }
 
 
+
+  // Renomeado para 'databaseInstance' para evitar conflito com o membro estático
+  static Future<Database> get databaseInstance async {
+    final dbPath = await getDatabasesPath();
+    return openDatabase(join(dbPath, 'church_schedule.db'));
+  }
+
+  // Método para obter a escala por ID
+  Future<Map<String, dynamic>> getScaleById(int scaleId) async {
+    final db = await databaseInstance; // Acesso ao banco de dados
+    final result = await db.query(
+      'scales', // Nome da tabela de escalas
+      where: 'id = ?', // Condição para buscar pela ID
+      whereArgs: [scaleId], // Argumento a ser passado
+    );
+
+    if (result.isNotEmpty) {
+      return result.first; // Retorna o primeiro (único) item encontrado
+    } else {
+      throw Exception('Escala não encontrada');
+    }
+  }
+
   // Método para buscar o nome da posição com base no positionId e departmentId
   // Remova o 'static' do método, tornando-o um método de instância
   Future<String> getPositionName(int positionId, int departmentId) async {

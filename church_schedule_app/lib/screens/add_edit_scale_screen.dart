@@ -25,12 +25,15 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
   ];
   List<Map<String, dynamic>> _filteredMembers = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDepartments();
-    _loadMembers();
+@override
+void initState() {
+  super.initState();
+  _loadDepartments();
+  _loadMembers();
+  if (widget.scaleId != null) {
+    _loadScale(widget.scaleId!); // Carregar dados da escala para edição
   }
+}
 
   Future<void> _loadDepartments() async {
     final departments = await DBHelper.getDepartments();
@@ -56,6 +59,26 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
       _members = members;
     });
   }
+
+  Future<void> _loadScale(int scaleId) async {
+    try {
+      final scale = await DBHelper().getScaleById(scaleId); // Busca a escala no banco
+  
+      setState(() {
+        // Valores retornados do banco de dados (com tratamento para valores nulos)
+        _selectedDepartment = scale['departmentId']?.toString() ?? ''; // Convertendo para string
+        _selectedPosition = scale['positionId'] ?? 0; // Valor padrão
+        _selectedMember = scale['memberId'] ?? 0; // Valor padrão
+        _selectedDate = scale['date'] != null
+            ? DateTime.parse(scale['date']) // Convertendo para DateTime
+            : DateTime.now(); // Valor padrão se for nulo
+        _selectedTime = scale['time'] ?? ''; // Valor padrão
+      });
+    } catch (e) {
+      print('Erro ao carregar escala: $e');
+    }
+  }
+
 
   Future<void> _saveScale() async {
     if (_formKey.currentState!.validate()) {
@@ -156,62 +179,61 @@ class _AddEditScaleScreenState extends State<AddEditScaleScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(labelText: 'Departamento'),
-                items: _departments
-                    .map((department) => DropdownMenuItem<String>(
-                          value: department['id'].toString(),
-                          child: Text(department['name']),
-                        ))
-                    .toList(),
-                onChanged: (value) async {
-                  setState(() {
-                    _selectedDepartment = value;
-                    _selectedPosition = null;
-                    _selectedMember = null; // Resetando a seleção de membro
-                  });
-                  if (value != null) {
-                    await _loadPositions(int.parse(value));
-                    _filterMembersByDepartment(int.parse(value));
-                  }
-                },
-                validator: (value) => value == null ? 'Selecione um departamento' : null,
-              ),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: 'Departamento'),
+              value: _selectedDepartment, // Definir o valor selecionado
+              items: _departments
+                  .map((department) => DropdownMenuItem<String>(
+                        value: department['id'].toString(),
+                        child: Text(department['name']),
+                      ))
+                  .toList(),
+              onChanged: (value) async {
+                setState(() {
+                  _selectedDepartment = value;
+                  _selectedPosition = null; // Resetando a posição
+                  _selectedMember = null;  // Resetando o membro
+                });
+                if (value != null) {
+                  await _loadPositions(int.parse(value));
+                  _filterMembersByDepartment(int.parse(value));
+                }
+              },
+              validator: (value) => value == null ? 'Selecione um departamento' : null,
+            ),
               if (_positions.isNotEmpty)
-                DropdownButtonFormField<int>(
-                  decoration: InputDecoration(labelText: 'Posição'),
-                  value: _positions.any((position) => position['id'] == _selectedPosition)
-                      ? _selectedPosition
-                      : null,
-                  items: _positions
-                      .map((position) => DropdownMenuItem<int>(
-                            value: position['id'],
-                            child: Text(position['name']),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedPosition = value;
-                    });
-                  },
-                  validator: (value) => value == null ? 'Selecione uma posição' : null,
-                ),
-              DropdownButtonFormField<int>(
-                decoration: InputDecoration(labelText: 'Membro'),
-                value: _selectedMember,
-                items: _filteredMembers
-                    .map((member) => DropdownMenuItem<int>(
-                          value: member['id'],
-                          child: Text(member['name']),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedMember = value;
-                  });
-                },
-                validator: (value) => value == null ? 'Selecione um membro' : null,
-              ),
+DropdownButtonFormField<int>(
+  decoration: InputDecoration(labelText: 'Posição'),
+  value: _selectedPosition, // Definir o valor selecionado
+  items: _positions
+      .map((position) => DropdownMenuItem<int>(
+            value: position['id'],
+            child: Text(position['name']),
+          ))
+      .toList(),
+  onChanged: (value) {
+    setState(() {
+      _selectedPosition = value;
+    });
+  },
+  validator: (value) => value == null ? 'Selecione uma posição' : null,
+),
+DropdownButtonFormField<int>(
+  decoration: InputDecoration(labelText: 'Membro'),
+  value: _selectedMember, // Definir o valor selecionado
+  items: _filteredMembers
+      .map((member) => DropdownMenuItem<int>(
+            value: member['id'],
+            child: Text(member['name']),
+          ))
+      .toList(),
+  onChanged: (value) {
+    setState(() {
+      _selectedMember = value;
+    });
+  },
+  validator: (value) => value == null ? 'Selecione um membro' : null,
+),
               SizedBox(height: 16),
               TextFormField(
                 readOnly: true,
