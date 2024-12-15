@@ -271,6 +271,37 @@ class DBHelper {
 
     return result;
   }
+  
+  Future<List<Map<String, dynamic>>> getScalesWithPositionNames() async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT scales.*, positions.name AS position_name
+      FROM scales
+      JOIN positions ON scales.positionId = positions.id
+    ''');
+
+    return result;
+  }
+
+
+  // Método para buscar o nome da posição com base no positionId e departmentId
+  // Remova o 'static' do método, tornando-o um método de instância
+  Future<String> getPositionName(int positionId, int departmentId) async {
+    final db = await database;
+    final result = await db.query(
+      'positions',
+      where: 'id = ? AND departmentId = ?',
+      whereArgs: [positionId, departmentId],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['name'] as String; // Garantindo que o valor é retornado como String
+    } else {
+      return 'Posição não encontrada';
+    }
+  }
+
 
 
   // Alteração da inserção de escalas
@@ -368,9 +399,9 @@ class DBHelper {
   static Future<Map<String, dynamic>> getMemberById(int memberId) async {
     final db = await DBHelper().database;
     final result = await db.query('members', where: 'id = ?', whereArgs: [memberId]);
-  
+
     print('Resultado da consulta: $result'); // Verifique o que está sendo retornado
-  
+
     return result.isNotEmpty ? result.first : {}; // Retorna um mapa vazio caso não haja resultado
   }
 

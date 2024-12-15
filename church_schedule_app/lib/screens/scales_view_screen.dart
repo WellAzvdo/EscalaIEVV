@@ -3,9 +3,8 @@ import 'package:table_calendar/table_calendar.dart';
 import '../database/db_helper.dart';
 
 class ScalesViewScreen extends StatefulWidget {
-  final String departmentName; // Adicionado para receber o nome do departamento
+  final String departmentName;
 
-  // Modificando o construtor para aceitar departmentName
   ScalesViewScreen({required this.departmentName});
 
   @override
@@ -18,6 +17,8 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
   late List<Map<String, dynamic>> _scales;
   List<Map<String, dynamic>> _departments = [];
   List<Map<String, dynamic>> _members = [];
+
+  final DBHelper dbHelper = DBHelper(); // Instanciando DBHelper
 
   @override
   void initState() {
@@ -55,11 +56,15 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
     return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
+  Future<String> _getPositionName(int positionId, int departmentId) async {
+    return await dbHelper.getPositionName(positionId, departmentId); // Usando a instância dbHelper
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Escala - ${widget.departmentName}'), // Exibe o nome do departamento
+        title: Text('Escala - ${widget.departmentName}'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -95,14 +100,13 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                 itemBuilder: (context, index) {
                   final scale = _scales[index];
 
-                  // Verificando se a escala corresponde à data selecionada e ao departamento
                   final dateTime = DateTime.tryParse(scale['dateTime'] ?? '');
                   if (dateTime == null || dateTime.day != _selectedDay.day) {
-                    return Container(); // Se não for no dia selecionado, ignore
+                    return Container();
                   }
 
                   if (scale['departmentName'] != widget.departmentName) {
-                    return Container(); // Se o departamento não corresponder, ignore
+                    return Container();
                   }
 
                   final department = _departments.firstWhere(
@@ -112,48 +116,62 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
 
                   final departmentName = department['name'] ?? 'Departamento não encontrado';
 
-                  final position = scale['positionId'] != null
-                      ? 'Posição: ${scale['positionId']}'
-                      : 'Posição não encontrada';
+                  // Buscando o nome da posição com positionId e departmentId
+                  final positionName = scale['positionId'] != null
+                      ? _getPositionName(scale['positionId'], scale['departmentId'])
+                      : Future.value('Posição não encontrada');
 
-                  final memberIds = (scale['memberIds'] as String?)
-                      ?.split(',')
-                      .map((id) => int.tryParse(id.trim()))
-                      .where((id) => id != null)
-                      .toList() ?? [];
+                  return FutureBuilder<String>(
+                    future: positionName,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return CircularProgressIndicator();
+                      } else if (snapshot.hasError) {
+                        return Text('Erro ao carregar posição');
+                      } else {
+                        final position = snapshot.data ?? 'Posição não encontrada';
 
-                  final memberNames = memberIds.map<String>((id) {
-                    final member = _members.firstWhere(
-                      (member) => member['id'] == id,
-                      orElse: () => {'id': id, 'name': 'Membro não encontrado'},
-                    );
-                    return member['name'] ?? 'Membro não encontrado';
-                  }).join(', ');
+                        final memberIds = (scale['memberIds'] as String?)
+                            ?.split(',')
+                            .map((id) => int.tryParse(id.trim()))
+                            .where((id) => id != null)
+                            .toList() ?? [];
 
-                  final formattedDate = _formatDateTime(dateTime);
+                        final memberNames = memberIds.map<String>((id) {
+                          final member = _members.firstWhere(
+                            (member) => member['id'] == id,
+                            orElse: () => {'id': id, 'name': 'Membro não encontrado'},
+                          );
+                          return member['name'] ?? 'Membro não encontrado';
+                        }).join(', ');
 
-                  return Card(
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(16),
-                      title: Text(
-                        'Departamento: $departmentName',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(position),
-                          Text('Membro(s): $memberNames'),
-                          SizedBox(height: 4),
-                          Text('Data: $formattedDate'),
-                        ],
-                      ),
-                    ),
+                        final formattedDate = _formatDateTime(dateTime);
+
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(16),
+                            title: Text(
+                              'Departamento: $departmentName',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Posição: $position'),
+                                Text('Membro(s): $memberNames'),
+                                SizedBox(height: 4),
+                                Text('Data: $formattedDate'),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   );
                 },
               ),
