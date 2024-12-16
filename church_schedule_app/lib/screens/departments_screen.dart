@@ -37,81 +37,14 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
     _fetchDepartments();
   }
 
-  Future<String?> _showIconSelectionDialog() async {
-    final icons = <IconData>[
-      Icons.ac_unit,
-      Icons.access_alarm,
-      Icons.accessibility,
-      Icons.account_balance,
-      Icons.add_shopping_cart,
-      Icons.airplanemode_active,
-      Icons.all_inclusive,
-      Icons.assessment,
-      Icons.bookmark,
-      Icons.build,
-      Icons.business,
-      Icons.camera_alt,
-      Icons.chat,
-      Icons.cloud,
-      Icons.computer,
-      Icons.contacts,
-      Icons.directions_car,
-      Icons.email,
-      Icons.favorite,
-      Icons.fingerprint,
-      Icons.home,
-      Icons.language,
-      Icons.music_note,
-      Icons.notifications,
-      Icons.restaurant,
-      Icons.school,
-      Icons.shop,
-      Icons.star,
-      Icons.sports_baseball,
-      Icons.train,
-      Icons.work,
-      // Adicione mais ícones conforme necessário
-    ];
-
-    return showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Selecione um ícone'),
-          content: Container(
-            width: double.maxFinite,
-            child: GridView.builder(
-              shrinkWrap: true,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: icons.length,
-              itemBuilder: (context, index) {
-                final icon = icons[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pop(icon.codePoint.toString());
-                  },
-                  child: Icon(icon, size: 40),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _showAddEditDialog({int? id, String? currentName, String? currentIcon}) {
     final _nameController = TextEditingController(text: currentName ?? '');
-    String? selectedIcon = currentIcon; // Mantém o ícone atual (se houver)
-  
+    String? selectedIcon = currentIcon;
+
     showDialog(
       context: context,
       builder: (_) {
-        return StatefulBuilder( // Para atualizar o estado dentro do dialog
+        return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text(id == null ? 'Adicionar Departamento' : 'Editar Departamento'),
@@ -154,26 +87,25 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Cancel'),
+                  child: Text('Cancelar'),
                 ),
                 TextButton(
                   onPressed: () {
                     if (selectedIcon == null) {
-                      // Mostra mensagem de erro se o ícone não foi selecionado
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Por favor, seleciona um ícone!')),
+                        SnackBar(content: Text('Por favor, selecione um ícone!')),
                       );
-                      return; // Não permite salvar
+                      return;
                     }
-  
+
                     if (id == null) {
-                      _addDepartment(_nameController.text, selectedIcon!);
+                      _addDepartment(_nameController.text, selectedIcon);
                     } else {
-                      _editDepartment(id, _nameController.text, selectedIcon!);
+                      _editDepartment(id, _nameController.text, selectedIcon);
                     }
                     Navigator.of(context).pop();
                   },
-                  child: Text('Save'),
+                  child: Text('Salvar'),
                 ),
               ],
             );
@@ -183,41 +115,63 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
     );
   }
 
+  Future<String?> _showIconSelectionDialog() async {
+    final icons = <IconData>[
+      Icons.ac_unit,
+      Icons.access_alarm,
+      Icons.accessibility,
+      Icons.account_balance,
+      Icons.add_shopping_cart,
+      Icons.airplanemode_active,
+      Icons.all_inclusive,
+      Icons.assessment,
+      Icons.bookmark,
+      Icons.build,
+      Icons.business,
+      Icons.camera_alt,
+      Icons.chat,
+      Icons.cloud,
+      Icons.computer,
+      Icons.contacts,
+      Icons.directions_car,
+      Icons.email,
+      Icons.favorite,
+      Icons.fingerprint,
+      Icons.home,
+      Icons.language,
+      Icons.music_note,
+      Icons.notifications,
+      Icons.restaurant,
+      Icons.school,
+      Icons.shop,
+      Icons.star,
+      Icons.sports_baseball,
+      Icons.train,
+      Icons.work,
+    ];
 
-  Future<String?> _showIconPicker(BuildContext context) async {
-    return await showDialog<String>(
+    return showDialog<String>(
       context: context,
       builder: (context) {
-        final icons = [
-          Icons.home,
-          Icons.school,
-          Icons.work,
-          Icons.star,
-          Icons.favorite,
-          Icons.people,
-          Icons.music_note,
-          Icons.sports,
-          Icons.business,
-        ];
-
         return AlertDialog(
           title: Text('Selecione um ícone'),
-          content: SizedBox(
+          content: Container(
             width: double.maxFinite,
             child: GridView.builder(
+              shrinkWrap: true,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
+                crossAxisCount: 5,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
               ),
-              shrinkWrap: true,
               itemCount: icons.length,
               itemBuilder: (context, index) {
+                final icon = icons[index];
                 return GestureDetector(
                   onTap: () {
-                    Navigator.of(context).pop(icons[index].codePoint.toString());
+                    Navigator.of(context).pop(icon.codePoint.toString());
                   },
-                  child: Icon(icons[index], size: 30),
+                  child: Icon(icon, size: 40),
                 );
               },
             ),
@@ -233,7 +187,7 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
       builder: (_) {
         return AlertDialog(
           title: Text('Confirmar Exclusão'),
-          content: Text('ATem certeza de que deseja excluir este Departamento?'),
+          content: Text('Tem certeza de que deseja excluir este Departamento?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -256,45 +210,70 @@ class _DepartmentsScreenState extends State<DepartmentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Departamento'),
+        title: Text('Departamentos', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Color(0xFF631221),
       ),
-      body: _departments.isEmpty
-          ? Center(child: Text('Nenhum departamento adicionado ainda.'))
-          : ListView.builder(
-              itemCount: _departments.length,
-              itemBuilder: (context, index) {
-                final department = _departments[index];
-                return ListTile(
-                  leading: department['icon'] != null
-                      ? Icon(
-                          IconData(
-                            int.parse(department['icon']),
-                            fontFamily: 'MaterialIcons',
+      body: Container(
+        color: Color(0xFF1B1B1B),
+        child: Column(
+          children: [
+            SizedBox(height: 10), // Espaçamento abaixo do título
+            Expanded(
+              child: _departments.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Nenhum departamento adicionado ainda.',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _departments.length,
+                      itemBuilder: (context, index) {
+                        final department = _departments[index];
+                        return Card(
+                          color: Color(0xFF292929),
+                          margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          child: ListTile(
+                            leading: department['icon'] != null
+                                ? Icon(
+                                    IconData(
+                                      int.parse(department['icon']),
+                                      fontFamily: 'MaterialIcons',
+                                    ),
+                                    color: Colors.white,
+                                  )
+                                : null,
+                            title: Text(
+                              department['name'],
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit, color: Colors.white70),
+                                  onPressed: () => _showAddEditDialog(
+                                    id: department['id'],
+                                    currentName: department['name'],
+                                    currentIcon: department['icon'],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.redAccent),
+                                  onPressed: () => _confirmDelete(department['id']),
+                                ),
+                              ],
+                            ),
                           ),
-                        )
-                      : null,
-                  title: Text(department['name']),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed: () => _showAddEditDialog(
-                          id: department['id'],
-                          currentName: department['name'],
-                          currentIcon: department['icon'],
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () => _confirmDelete(department['id']),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                        );
+                      },
+                    ),
             ),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF631221),
         child: Icon(Icons.add),
         onPressed: () => _showAddEditDialog(),
       ),

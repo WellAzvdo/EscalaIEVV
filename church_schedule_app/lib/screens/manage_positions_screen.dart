@@ -71,7 +71,7 @@ class _ManagePositionsScreenState extends State<ManagePositionsScreen> {
     if (confirmation == true) {
       try {
         await DBHelper.deletePosition(id);
-        _loadPositions(); // Atualiza a lista de posições após exclusão
+        _loadPositions();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Posição excluída com sucesso!')),
         );
@@ -82,7 +82,6 @@ class _ManagePositionsScreenState extends State<ManagePositionsScreen> {
       }
     }
   }
-
 
   Future<void> _editPosition(int id, String newName) async {
     await DBHelper.updatePosition(id, newName);
@@ -120,25 +119,31 @@ class _ManagePositionsScreenState extends State<ManagePositionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gerenciar Posições'),
+        title: Text(
+          'Gerenciar Posições',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Color(0xFF631221),
       ),
-      body: Padding(
+      body: Container(
+        color: Color(0xFF1B1B1B),
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             DropdownButton<int>(
               value: _selectedDepartmentId,
-              hint: Text('Selecione um Departamento'),
+              dropdownColor: Color(0xFF292929),
+              hint: Text('Selecione um Departamento', style: TextStyle(color: Colors.white)),
               items: _departments
                   .map((dept) => DropdownMenuItem<int>(
                         value: dept['id'],
-                        child: Text(dept['name']),
+                        child: Text(dept['name'], style: TextStyle(color: Colors.white)),
                       ))
                   .toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedDepartmentId = value;
-                   _positions = [];
+                  _positions = [];
                 });
                 _loadPositions();
               },
@@ -146,40 +151,65 @@ class _ManagePositionsScreenState extends State<ManagePositionsScreen> {
             SizedBox(height: 16),
             TextField(
               controller: _positionNameController,
+              style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Nova Posição',
+                labelStyle: TextStyle(color: Colors.white70),
                 border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white70),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
               ),
             ),
             SizedBox(height: 16),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF631221),
+              ),
               onPressed: _addPosition,
               child: Text('Adicionar Posição'),
             ),
             SizedBox(height: 24),
             Expanded(
-              child: ListView.builder(
-                itemCount: _positions.length,
-                itemBuilder: (context, index) {
-                  final position = _positions[index];
-                  return ListTile(
-                    title: Text(position['name']),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () => _showEditDialog(position),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () => _deletePosition(position['id']),
-                        ),
-                      ],
+              child: _positions.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Nenhuma posição cadastrada.',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _positions.length,
+                      itemBuilder: (context, index) {
+                        final position = _positions[index];
+                        return Card(
+                          color: Color(0xFF292929),
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            title: Text(
+                              position['name'],
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.edit, color: Colors.white70),
+                                  onPressed: () => _showEditDialog(position),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete, color: Colors.redAccent),
+                                  onPressed: () => _deletePosition(position['id']),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

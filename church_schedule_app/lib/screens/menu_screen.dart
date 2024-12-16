@@ -8,62 +8,101 @@ import '../screens/departments_selecion_screen.dart'; // Importar a tela de sele
 
 class MenuScreen extends StatelessWidget {
   final List<Map<String, dynamic>> _menuItems = [
-    {'icon': Icons.business, 'label': 'Departamentos', 'screen': DepartmentsScreen()},
-    {'icon': Icons.settings, 'label': 'Gerenciar Posições', 'screen': ManagePositionsScreen()},
-    {'icon': Icons.person, 'label': 'Membros', 'screen': AddMembersScreen()},
-    {'icon': Icons.schedule, 'label': 'Escalas', 'screen': AddEditScaleScreen()},
-    {'icon': Icons.calendar_today, 'label': 'Visualizar Escalas', 'screen': DepartmentsSelectionScreen()}, // Alterado para a tela de seleção de departamentos
+    {
+      'icon': Icons.business,
+      'label': 'Departamentos',
+      'screen': DepartmentsScreen()
+    },
+    {
+      'icon': Icons.settings,
+      'label': 'Gerenciar Posições',
+      'screen': ManagePositionsScreen()
+    },
+    {
+      'icon': Icons.person,
+      'label': 'Membros',
+      'screen': AddMembersScreen()
+    },
+    {
+      'icon': Icons.schedule,
+      'label': 'Escalas',
+      'screen': AddEditScaleScreen()
+    },
+    {
+      'icon': Icons.calendar_today,
+      'label': 'Visualizar Escalas',
+      'screen': DepartmentsSelectionScreen()
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Menu Principal'),
-      ),
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // Número de colunas
-          mainAxisSpacing: 20,
-          crossAxisSpacing: 20,
+        title: Text(
+          'IEVV Aldeota - Escalas',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        padding: EdgeInsets.all(20),
-        itemCount: _menuItems.length,
-        itemBuilder: (context, index) {
-          final item = _menuItems[index];
-          return GestureDetector(
-            onTap: () {
-              if (item['department'] != null) {
-                // Passar o nome do departamento para a tela ScalesViewScreen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ScalesViewScreen(
-                      departmentName: item['department'], // Passar o nome do departamento
-                    ),
-                  ),
-                );
-              } else {
-                // Para os outros itens de menu sem departamento
+        backgroundColor: Color(0xFF631221),
+      ),
+      body: Container(
+        color: Color(0xFF1B1B1B),
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2, // Número de colunas
+            mainAxisSpacing: 20,
+            crossAxisSpacing: 20,
+          ),
+          padding: EdgeInsets.all(20),
+          itemCount: _menuItems.length,
+          itemBuilder: (context, index) {
+            final item = _menuItems[index];
+            return GestureDetector(
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => item['screen']),
                 );
-              }
-            },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  child: Icon(item['icon'], size: 40),
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFF292929),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      offset: Offset(0, 4),
+                      blurRadius: 6,
+                    ),
+                  ],
                 ),
-                SizedBox(height: 10),
-                Text(item['label']),
-              ],
-            ),
-          );
-        },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Color(0xFF631221),
+                      child: Icon(
+                        item['icon'],
+                        size: 40,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      item['label'],
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
