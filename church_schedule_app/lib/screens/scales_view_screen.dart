@@ -120,15 +120,21 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Escala - ${widget.departmentName}'),
+        title: Text(
+          'Escala - ${widget.departmentName}',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Color(0xFF631221), // Cor da AppBar
+        centerTitle: true,
       ),
-      body: Padding(
+      body: Container(
+        color: Color(0xFF1B1B1B), // Cor de fundo principal
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TableCalendar(
-              locale: 'pt_BR', // Define o idioma para Português do Brasil
+              locale: 'pt_BR',
               firstDay: DateTime.utc(2020, 1, 1),
               lastDay: DateTime.utc(2100, 1, 1),
               focusedDay: _selectedDay,
@@ -144,6 +150,36 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                   _calendarFormat = format;
                 });
               },
+              availableCalendarFormats: {
+                CalendarFormat.week: 'Semana',        // Traduz "Week" para "Semana"
+                CalendarFormat.twoWeeks: '2 Semanas', // Traduz "2 weeks" para "2 Semanas"
+                CalendarFormat.month: 'Mês',          // Traduz "Month" para "Mês"
+              },
+              calendarStyle: CalendarStyle(
+                todayDecoration: BoxDecoration(
+                  color: Color(0xFF631221),
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration: BoxDecoration(
+                  color: Color(0xFF292929),
+                  shape: BoxShape.circle,
+                ),
+                todayTextStyle: TextStyle(color: Colors.white),
+                selectedTextStyle: TextStyle(color: Colors.white),
+                defaultTextStyle: TextStyle(color: Colors.white70),
+                weekendTextStyle: TextStyle(color: Colors.redAccent),
+                outsideDaysVisible: false,
+              ),
+              headerStyle: HeaderStyle(
+                titleTextStyle: TextStyle(color: Colors.white, fontSize: 16),
+                formatButtonTextStyle: TextStyle(color: Colors.white),
+                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
+                rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
+              ),
+              daysOfWeekStyle: DaysOfWeekStyle(
+                weekdayStyle: TextStyle(color: Colors.white70),
+                weekendStyle: TextStyle(color: Colors.redAccent),
+              ),
             ),
             SizedBox(height: 16),
             Expanded(
@@ -168,7 +204,6 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
 
                   final departmentName = department['name'] ?? 'Departamento não encontrado';
 
-                  // Buscando o nome da posição com positionId e departmentId
                   final positionName = scale['positionId'] != null
                       ? _getPositionName(scale['positionId'], scale['departmentId'])
                       : Future.value('Posição não encontrada');
@@ -177,17 +212,18 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                     future: positionName,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return CircularProgressIndicator();
+                        return Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
-                        return Text('Erro ao carregar posição');
+                        return Text('Erro ao carregar posição', style: TextStyle(color: Colors.redAccent));
                       } else {
                         final position = snapshot.data ?? 'Posição não encontrada';
 
                         final memberIds = (scale['memberIds'] as String?)
-                                ?.split(',') 
+                                ?.split(',')
                                 .map((id) => int.tryParse(id.trim()))
                                 .where((id) => id != null)
-                                .toList() ?? [];
+                                .toList() ??
+                            [];
 
                         final memberNames = memberIds
                             .map<String>((id) {
@@ -202,8 +238,8 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                         final formattedTime = _formatTime(dateTime);
 
                         return Card(
+                          color: Color(0xFF292929), // Cor de fundo do Card
                           margin: EdgeInsets.symmetric(vertical: 8),
-                          elevation: 4,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -211,37 +247,48 @@ class _ScalesViewScreenState extends State<ScalesViewScreen> {
                             contentPadding: EdgeInsets.all(16),
                             title: Text(
                               'Membro: $memberNames',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Posição: $position',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white70),
                                 ),
                                 Text(
                                   'Hora: $formattedTime',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.white70),
                                 ),
                               ],
                             ),
-                            trailing: PopupMenuButton<String>(
+                            trailing: PopupMenuButton<String>(                                
+                              icon: Icon(Icons.more_vert, color: Colors.white), // Três pontinhos na cor branca
+                              color: Color(0xFF1B1B1B),
                               onSelected: (value) {
                                 if (value == 'edit') {
-                                  _editScale(scale); // Editar escala
+                                  _editScale(scale);
                                 } else if (value == 'delete') {
-                                  _deleteScale(scale['id']); // Deletar escala
+                                  _deleteScale(scale['id']);
                                 }
                               },
                               itemBuilder: (context) => [
                                 PopupMenuItem<String>(
                                   value: 'edit',
-                                  child: Text('Editar'),
+                                  child: Text('Editar', style: TextStyle(color: Colors.white70)),
                                 ),
                                 PopupMenuItem<String>(
                                   value: 'delete',
-                                  child: Text('Excluir'),
+                                  child: Text('Excluir', style: TextStyle(color: Colors.redAccent)),
                                 ),
                               ],
                             ),

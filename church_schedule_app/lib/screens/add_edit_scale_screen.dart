@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../database/db_helper.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 class AddEditScaleScreen extends StatefulWidget {
   final int? scaleId;
@@ -170,9 +171,14 @@ void initState() {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.scaleId == null ? 'Adicionar Escala' : 'Editar Escala'),
+        title: Text(widget.scaleId == null ? 'Adicionar Escala' : 'Editar Escala',
+        style: TextStyle(fontWeight: FontWeight.bold)
+        ),
+        backgroundColor: Color(0xFF631221),
+        centerTitle: true,
       ),
-      body: Padding(
+      body: Container(
+        color: Color(0xFF1B1B1B),
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -180,12 +186,25 @@ void initState() {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
             DropdownButtonFormField<String>(
-              decoration: InputDecoration(labelText: 'Departamento'),
+              decoration: InputDecoration(
+                labelText: 'Departamento',
+                labelStyle: TextStyle(color: Colors.white70),
+                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white70),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
               value: _selectedDepartment, // Definir o valor selecionado
               items: _departments
                   .map((department) => DropdownMenuItem<String>(
                         value: department['id'].toString(),
-                        child: Text(department['name']),
+                        child: Text(
+                          department['name'],
+                          style: TextStyle(color: Colors.white),  
+                        ),
                       ))
                   .toList(),
               onChanged: (value) async {
@@ -199,45 +218,89 @@ void initState() {
                   _filterMembersByDepartment(int.parse(value));
                 }
               },
-              validator: (value) => value == null ? 'Selecione um departamento' : null,
+              validator: (value) => 
+                value == null ? 'Selecione um departamento' : null,
+              dropdownColor: Color(0xFF292929),
             ),
-              if (_positions.isNotEmpty)
-DropdownButtonFormField<int>(
-  decoration: InputDecoration(labelText: 'Posição'),
-  value: _selectedPosition, // Definir o valor selecionado
-  items: _positions
-      .map((position) => DropdownMenuItem<int>(
-            value: position['id'],
-            child: Text(position['name']),
-          ))
-      .toList(),
-  onChanged: (value) {
-    setState(() {
-      _selectedPosition = value;
-    });
-  },
-  validator: (value) => value == null ? 'Selecione uma posição' : null,
-),
-DropdownButtonFormField<int>(
-  decoration: InputDecoration(labelText: 'Membro'),
-  value: _selectedMember, // Definir o valor selecionado
-  items: _filteredMembers
-      .map((member) => DropdownMenuItem<int>(
-            value: member['id'],
-            child: Text(member['name']),
-          ))
-      .toList(),
-  onChanged: (value) {
-    setState(() {
-      _selectedMember = value;
-    });
-  },
-  validator: (value) => value == null ? 'Selecione um membro' : null,
-),
+            SizedBox(height: 16),
+            if (_positions.isNotEmpty)
+            DropdownButtonFormField<int>(
+              decoration: InputDecoration(
+                labelText: 'Posição',
+                labelStyle: TextStyle(color: Colors.white70),  // Cor da label
+                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white70),  // Borda quando não está focado
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),  // Borda quando está focado
+                ),
+              ),
+              value: _selectedPosition, // Definir o valor selecionado
+              items: _positions
+                  .map((position) => DropdownMenuItem<int>(
+                        value: position['id'],
+                        child: Text(position['name'],
+                        style: TextStyle(color: Colors.white),
+                        ),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedPosition = value;
+                });
+              },
+              validator: (value) => 
+                value == null ? 'Selecione uma posição' : null,
+              dropdownColor: Color(0xFF292929),  // Cor do fundo da lista dropdown
+            ),
+            SizedBox(height: 16),
+            DropdownButtonFormField<int>(
+              decoration: InputDecoration(
+                labelText: 'Membro',
+                labelStyle: TextStyle(color: Colors.white70),  // Cor da label
+                border: OutlineInputBorder(),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white70),  // Borda quando não está focado
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),  // Borda quando está focado
+                ),
+              ),
+              value: _selectedMember, // Definir o valor selecionado
+              items: _filteredMembers
+                  .map((member) => DropdownMenuItem<int>(
+                        value: member['id'],
+                        child: Text(member['name'],
+                        style: TextStyle(color: Colors.white),  // Cor do texto na lista
+                        ),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedMember = value;
+                });
+              },
+              validator: (value) => 
+                  value == null ? 'Selecione um membro' : null,
+              dropdownColor: Color(0xFF292929),  // Cor do fundo da lista dropdown
+
+            ),
               SizedBox(height: 16),
               TextFormField(
                 readOnly: true,
-                decoration: InputDecoration(labelText: 'Data'),
+                style: TextStyle(color: Colors.white), // Define a cor do texto como branco
+                decoration: InputDecoration(
+                  labelText: 'Data',
+                  labelStyle: TextStyle(color: Colors.white70),
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white70),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),
+                  ),
+                ),
                 controller: TextEditingController(
                   text: '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                 ),
@@ -247,6 +310,7 @@ DropdownButtonFormField<int>(
                     initialDate: _selectedDate,
                     firstDate: DateTime.now(),
                     lastDate: DateTime(2100),
+                    locale: const Locale('pt', 'BR'), // Define o calendário em português
                   );
                   if (pickedDate != null) {
                     setState(() {
@@ -257,11 +321,24 @@ DropdownButtonFormField<int>(
               ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                decoration: InputDecoration(labelText: 'Horário'),
+                decoration: InputDecoration(
+                  labelText: 'Horário',
+                  labelStyle: TextStyle(color: Colors.white70),  // Cor da label
+                  border: OutlineInputBorder(),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white70),  // Borda quando não está focado
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white),  // Borda quando está focado
+                  ),
+                ),
                 items: _availableTimes
                     .map((time) => DropdownMenuItem<String>(
                           value: time,
-                          child: Text(time),
+                          child: Text(
+                            time,
+                            style: TextStyle(color: Colors.white),  // Cor do texto na lista
+                          ),
                         ))
                     .toList(),
                 onChanged: (value) {
@@ -269,12 +346,18 @@ DropdownButtonFormField<int>(
                     _selectedTime = value;
                   });
                 },
-                validator: (value) => value == null ? 'Selecione um horário' : null,
+                validator: (value) => 
+                    value == null ? 'Selecione um horário' : null,
+                dropdownColor: Color(0xFF292929),  // Cor do fundo da lista dropdown
               ),
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _saveScale,
                 child: Text(widget.scaleId == null ? 'Salvar Escala' : 'Atualizar Escala'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF631221),
+                  minimumSize: Size(double.infinity, 48),
+                ),
               ),
             ],
           ),
