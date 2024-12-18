@@ -6,7 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 void main() {
   runApp(
     DevicePreview(
-      enabled: true, // Habilite o Device Preview
+      enabled: false, // Habilite o Device Preview
       builder: (context) => MyApp(), // A aplicação principal
     ),
   );

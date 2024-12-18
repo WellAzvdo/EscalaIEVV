@@ -304,20 +304,55 @@ void initState() {
                 controller: TextEditingController(
                   text: '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                 ),
-                onTap: () async {
-                  final pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime(2100),
-                    locale: const Locale('pt', 'BR'), // Define o calendário em português
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      _selectedDate = pickedDate;
-                    });
-                  }
-                },
+onTap: () async {
+  final pickedDate = await showDatePicker(
+    context: context,
+    initialDate: _selectedDate,
+    firstDate: DateTime.now(),
+    lastDate: DateTime(2100),
+    locale: const Locale('pt', 'BR'), // Define o calendário em português
+    builder: (context, child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          dialogBackgroundColor: const Color(0xFF1B1B1B), // Fundo do diálogo
+          colorScheme: ColorScheme.dark(
+            primary: Color(0xFF631221),  // Cor de destaque (botões e header)
+            onPrimary: Colors.white,    // Cor do texto nos botões
+            surface: Colors.black,      // Fundo dos dias
+            onSurface: Colors.white,    // Cor do texto dos dias
+            background: Color(0xFF631221),
+            onBackground: Colors.blue,
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: Color(0xFF631221), // Cor dos botões no rodapé
+            ),
+          ),
+          // Aqui aplicamos sombra ao calendário
+          shadowColor: Colors.black.withOpacity(0.8),
+          dialogTheme: DialogTheme(
+            elevation: 8, // Aumenta a sombra
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15), // Bordas arredondadas
+            ),
+          ),
+          // Personalizando o cabeçalho
+          appBarTheme: AppBarTheme(
+            backgroundColor: Color(0xFF631221), // Cor de fundo do cabeçalho
+            titleTextStyle: TextStyle(color: Colors.white), // Cor do texto do cabeçalho
+          ),
+        ),
+        child: child!,
+      );
+    },
+  );
+  if (pickedDate != null) {
+    setState(() {
+      _selectedDate = pickedDate;
+    });
+  }
+},
+
               ),
               SizedBox(height: 16),
               DropdownButtonFormField<String>(
