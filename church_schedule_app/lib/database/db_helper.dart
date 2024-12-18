@@ -1,5 +1,5 @@
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite_common/sqflite.dart'; // Importando a classe Database
+//import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';  // Importação da biblioteca 'path'
 
 class DBHelper {
@@ -7,8 +7,7 @@ class DBHelper {
   static Database? _database;
 
   DBHelper._() {
-    sqfliteFfiInit(); // Inicializa suporte FFI
-    databaseFactory = databaseFactoryFfi; // Configura o factory global
+    // Não é mais necessário inicializar o sqflite_ffi
   }
 
   factory DBHelper() => _instance;
@@ -21,64 +20,59 @@ class DBHelper {
 
   // Inicializa o banco de dados e cria as tabelas
   Future<Database> _initDatabase() async {
-    final dbFactory = databaseFactoryFfi;
+    //final dbFactory = databaseFactoryFfi;
     final dbPath = await getDatabasesPath();
     final path = '$dbPath/church_schedule.db';
   
-    return await dbFactory.openDatabase(path, options: OpenDatabaseOptions(
-      version: 3,
-      onCreate: (db, version) async {
-        // Criação da tabela de departamentos
-        await db.execute(''' 
-          CREATE TABLE departments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            icon TEXT -- Novo campo para armazenar o ícone do departamento
+    return await openDatabase(path, version: 2, onCreate: (db, version) async {
+      // Criação da tabela de departamentos
+      await db.execute(''' 
+        CREATE TABLE departments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          icon TEXT -- Novo campo para armazenar o ícone do departamento
+        )
+      ''');
 
-          )
-        ''');
+      // Criação da tabela de escalas
+      await db.execute(''' 
+        CREATE TABLE scales (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          departmentId INTEGER,
+          positionId INTEGER,  -- A coluna positionId deve ser aqui
+          dateTime TEXT,
+          memberIds TEXT,
+          FOREIGN KEY (departmentId) REFERENCES departments(id)
+        )
+      ''');
 
-        // Criação da tabela de escalas
-        await db.execute(''' 
-          CREATE TABLE scales (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            departmentId INTEGER,
-            positionId INTEGER,  -- A coluna positionId deve ser aqui
-            dateTime TEXT,
-            memberIds TEXT,
-            FOREIGN KEY (departmentId) REFERENCES departments(id)
-          )
-        ''');
-
-        // Criação da tabela de membros com departmentId
-        await db.execute(''' 
-          CREATE TABLE members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            departmentId INTEGER,  
-            FOREIGN KEY (departmentId) REFERENCES departments(id)
-          )
-        ''');
+      // Criação da tabela de membros com departmentId
+      await db.execute(''' 
+        CREATE TABLE members (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          departmentId INTEGER,  
+          FOREIGN KEY (departmentId) REFERENCES departments(id)
+        )
+      ''');
         
-        await db.execute('''
-          CREATE TABLE positions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            departmentId INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            positionId INTEGER,
-            FOREIGN KEY(departmentId) REFERENCES departments(id)
-          )
-        ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        // No caso de uma atualização, se a versão for maior que 1, altere o banco
+      await db.execute('''
+        CREATE TABLE positions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          departmentId INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          positionId INTEGER,
+          FOREIGN KEY(departmentId) REFERENCES departments(id)
+        )
+      ''');
+    }, 
+        onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 3) {
           await db.execute(''' 
             ALTER TABLE departments ADD COLUMN icon TEXT;
           ''');
         }
-      },
-    ));
+    });
   }
 
   // Posições de cada departamento
